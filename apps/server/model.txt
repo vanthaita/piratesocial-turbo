@@ -1,0 +1,90 @@
+Table Users {
+    UserID INT [pk, increment]        // Khóa chính
+    Username VARCHAR(255) [not null]
+    PasswordHash VARCHAR(255) [not null]
+    Email VARCHAR(255) [not null]
+    PhoneNumber VARCHAR(20)
+    ProfilePicture VARCHAR(255)
+    Status VARCHAR(255)
+    LastSeen DATETIME
+}
+
+Table Messages {
+    MessageID INT [pk, increment]     // Khóa chính
+    SenderID INT [not null, ref: > Users.UserID]  // Liên kết đến Users
+    ReceiverID INT                    // Liên kết đến Users hoặc Groups
+    GroupID INT [ref: > Groups.GroupID]           // Nếu là tin nhắn nhóm
+    ChannelID INT [ref: > Channels.ChannelID]     // Nếu là tin nhắn trong kênh
+    MessageContent TEXT [not null]
+    Timestamp DATETIME [not null]
+    MessageType ENUM('text', 'image', 'video') [default: 'text']
+    EncryptionStatus BOOLEAN [default: false]
+    Status ENUM('sent', 'delivered', 'read') [default: 'sent'] // Trạng thái tin nhắn
+}
+
+Table Groups {
+    GroupID INT [pk, increment]       // Khóa chính
+    GroupName VARCHAR(255) [not null]
+    CreatedBy INT [not null, ref: > Users.UserID]  // Người tạo nhóm
+    CreatedDate DATETIME [not null]
+}
+
+Table GroupMembers {
+    GroupMemberID INT [pk, increment] // Khóa chính
+    GroupID INT [not null, ref: > Groups.GroupID]  // Liên kết đến Groups
+    UserID INT [not null, ref: > Users.UserID]     // Liên kết đến Users
+    Role ENUM('admin', 'member') [default: 'member']
+    JoinedDate DATETIME [not null]
+}
+
+Table Attachments {
+    AttachmentID INT [pk, increment]  // Khóa chính
+    MessageID INT [not null, ref: > Messages.MessageID]  // Liên kết đến Messages
+    FileType VARCHAR(50) [not null]   // Loại tệp (image, video, etc.)
+    FilePath VARCHAR(255) [not null]  // Đường dẫn lưu file
+    FileSize INT                      // Kích thước file (byte)
+    ThumbnailPath VARCHAR(255)
+}
+
+Table Channels {
+    ChannelID INT [pk, increment]     // Khóa chính
+    Name VARCHAR(255) [not null]
+    Status VARCHAR(50)
+    CreatedAt DATETIME [not null]
+    LastMessageContent TEXT           // Nội dung tin nhắn cuối
+    LastMessageTimestamp DATETIME
+    UnreadMessages INT [default: 0]
+}
+
+Table MessageReactions {
+    MessageReactionID INT [pk, increment]  // Khóa chính
+    MessageID INT [not null, ref: > Messages.MessageID]  // Liên kết đến Messages
+    UserID INT [not null, ref: > Users.UserID]  // Liên kết đến Users
+    ReactionType VARCHAR(50) [not null]    // Loại phản ứng (like, love, haha, etc.)
+    Timestamp DATETIME [not null]
+}
+
+Table MessageStatus {
+    MessageStatusID INT [pk, increment]    // Khóa chính
+    MessageID INT [not null, ref: > Messages.MessageID]  // Liên kết đến Messages
+    UserID INT [not null, ref: > Users.UserID]  // Người dùng nhận tin nhắn
+    Status ENUM('sent', 'delivered', 'read') [not null]  // Trạng thái tin nhắn
+    Timestamp DATETIME [not null]  // Thời gian thay đổi trạng thái
+}
+
+Table Notifications {
+    NotificationID INT [pk, increment]     // Khóa chính
+    UserID INT [not null, ref: > Users.UserID]  // Liên kết đến Users
+    Message TEXT [not null]                // Nội dung thông báo
+    Seen BOOLEAN [default: false]          // Trạng thái đã xem
+    CreatedAt DATETIME [not null]
+}
+
+Table PinnedMessages {
+    PinnedMessageID INT [pk, increment]    // Khóa chính
+    MessageID INT [not null, ref: > Messages.MessageID]  // Liên kết đến Messages
+    UserID INT [not null, ref: > Users.UserID]  // Người ghim tin nhắn
+    PinnedAt DATETIME [not null]           // Thời gian ghim tin nhắn
+    GroupID INT [ref: > Groups.GroupID]    // Ghim tin nhắn trong nhóm (nếu có)
+    ChannelID INT [ref: > Channels.ChannelID]  // Ghim tin nhắn trong kênh (nếu có)
+}

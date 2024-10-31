@@ -1,81 +1,96 @@
-# Turborepo starter
+# PirateSocial
 
-This is an official starter Turborepo.
+PirateSocial is a web-based chat application that connects individuals who have a pirate spirit to do pirate-like things. Our platform is built with modern web technologies to provide fast, secure, and scalable real-time communication.
 
-## Using this example
+## Features
 
-Run the following command:
+- **Real-time messaging**: Chat with others instantly.
+- **Group chats**: Create and manage groups for different topics.
+- **Media sharing**: Share images, files, and other media.
+- **Private messaging**: Secure and private communication.
+- **Cross-platform support**: Access PirateSocial on desktop, mobile, and tablets.
+- **Notification system**: Stay updated with in-app and push notifications.
 
-```sh
-npx create-turbo@latest
+## Tech Stack
+
+### Frontend
+
+- **Next.js**: A React framework for building fast, scalable, and SEO-friendly web apps.
+- **Tailwind CSS**: A utility-first CSS framework for styling.
+- **Socket.io**: For real-time, bidirectional communication between the client and server.
+- **TypeScript**: Ensures type safety and improves the development process.
+
+### Backend
+
+- **NestJS**: A progressive Node.js framework for building efficient and scalable server-side applications.
+- **Socket.io**: To handle real-time communication on the backend.
+- **Prisma**: An ORM tool to interact with databases efficiently.
+- **PostgreSQL**: A powerful, open-source relational database.
+- **JWT (JSON Web Tokens)**: For authentication and session management.
+
+### Other Tools and Technologies
+
+- **Redis**: For session management and caching.
+- **Docker**: Containerization for easy deployment and scaling.
+- **NGINX**: As a reverse proxy for handling requests.
+- **Prisma**: For simplified database queries and management.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (>= 14.x)
+- PostgreSQL (>= 14.x)
+- Docker (optional, but recommended)
+
+### Installation
+
+1. Clone the repository:
+
+    ```bash
+    git clone https://github.com/TDevUIT/PirateSocial.git
+    cd PirateSocial
+    ```
+
+2. Install dependencies for both the frontend and backend:
+
+    ```bash
+    # Navigate to the frontend
+    cd frontend
+    npm install
+    
+    # Navigate to the backend
+    cd ../backend
+    npm install
+    ```
+
+3. Set up your `.env` files for both the frontend and backend (example provided in `.env.example` files).
+
+4. Run the development server:
+
+    ```bash
+    # Frontend (Next.js)
+    cd frontend
+    npm run dev
+    
+    # Backend (NestJS)
+    cd ../backend
+    npm run start:dev
+    ```
+
+### Running with Docker
+
+To run the entire application with Docker, use the following commands:
+
+```bash
+docker-compose up --build
 ```
+this will start both the frontend and backend services, along with PostgreSQL and Redis containers.
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+### Contributing
+We welcome contributions from the community! To get started:
+1. Fork the repository.
+2. Create a new branch for your feature/bugfix.
+3. Submit a pull request with a detailed description.
+### License
+PirateSocial is licensed under the MIT License.

@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int                @id @default(autoincrement())
+  name             String
+  email            String             @unique
+  password         String?
+  givenName        String?
+  familyName       String?
+  picture          String?
+  providerId       String?
+  createdAt        DateTime           @default(now())
+  messages         Chat[]             @relation("UserMessages")
+  rooms            RoomUser[]
+
+  messageReactions MessageReaction[]  // Relation to MessageReaction
+  notifications    Notification[]     // Relation to Notification
+  pinnedMessages   PinnedMessage[]    // Relation to PinnedMessage
+}
+
+model Chat {
+  id        Int       @id @default(autoincrement())
+  roomId    Int
+  senderId  Int
+  message  String  // Changed to plural to indicate multiple messages
+  createdAt DateTime   @default(now())
+  room      Room       @relation(fields: [roomId], references: [id])
+  sender    User       @relation("UserMessages", fields: [senderId], references: [id])
+  attachments     Attachment[]     // Relation to Attachment
+  reactions       MessageReaction[] // Relation to MessageReaction
+  pinnedMessages  PinnedMessage[]  //Relation to PinnedMessage
+}
+
+model Room {
+  id             Int             @id @default(autoincrement())
+  name           String
+  createdAt      DateTime        @default(now())
+  chats          Chat[]
+  users          RoomUser[]
+  pinnedMessages PinnedMessage[] // Relation to PinnedMessage
+}
+
+model RoomUser {
+  id      Int    @id @default(autoincrement())
+  roomId  Int
+  userId  Int
+  room    Room   @relation(fields: [roomId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
+  @@unique([roomId, userId])  // Ensuring each user is uniquely associated with a room
+}
+
+model Attachment {
+  id            Int      @id @default(autoincrement())
+  chatId     Int
+  fileType      String
+  filePath      String
+  fileSize      Int?
+  thumbnailPath String?
+  chat       Chat   @relation(fields: [chatId], references: [id])
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  LAUGH
+  SAD
+  ANGRY
+}
+
+model MessageReaction {
+  id           Int        @id @default(autoincrement())
+  chatId    Int
+  userId       Int
+  reactionType ReactionType
+  createdAt    DateTime    @default(now())
+  chat         Chat     @relation(fields: [chatId], references: [id])
+  user         User        @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  message         String
+  seen            Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model PinnedMessage {
+  id              Int      @id @default(autoincrement())
+  chatId       Int
+  userId          Int
+  pinnedAt        DateTime @default(now())
+  roomId          Int     // Room ID is nullable, which allows for a pinned message not necessarily tied to a room
+  chat         Chat  @relation(fields: [chatId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+  room            Room?    @relation(fields: [roomId], references: [id])
+}

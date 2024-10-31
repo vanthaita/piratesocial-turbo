@@ -1,4 +1,20 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
 
-export default nextConfig;
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+});
+
+export default withPWA({
+  reactStrictMode: true,
+  images: {
+    domains: [
+      "lh3.googleusercontent.com",
+      "pbs.twimg.com",
+      "images.unsplash.com",
+      "logos-world.net",
+      "plus.unsplash.com"
+    ],
+  },
+});
