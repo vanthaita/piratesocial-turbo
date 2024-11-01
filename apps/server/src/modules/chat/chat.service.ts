@@ -5,16 +5,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class ChatService {
   constructor(private readonly prisma: PrismaService) {}
+
   async sendMessage(roomId: number, senderId: number, message: string) {
-    if (!message) {
-      throw new Error('Message content is missing');
-    }
-    const sendingdata = await this.prisma.chat.create({
-      data: {
-        roomId,
-        senderId,
-        message,
-      },
+    if (!message) throw new Error('Message content is missing');
+    
+    const sentData = await this.prisma.chat.create({
+      data: { roomId, senderId, message },
       select: {
         id: true,
         roomId: true,
@@ -25,16 +21,17 @@ export class ChatService {
           select: {
             email: true,
             picture: true,
-          }
-        }
+          },
+        },
       },
     });
-    console.log("send Message: ", sendingdata);
-    return sendingdata;
+    
+    console.log("sendMessage:", sentData);
+    return sentData;
   }
 
   async getMessagesByRoom(roomId: number) {
-    const messageList = this.prisma.chat.findMany({
+    return this.prisma.chat.findMany({
       where: { roomId },
       select: {
         id: true,
@@ -46,11 +43,10 @@ export class ChatService {
           select: {
             email: true,
             picture: true,
-          }
-        }
+          },
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
-    return messageList;
   }
 }

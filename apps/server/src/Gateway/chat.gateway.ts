@@ -10,30 +10,23 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { ChatService } from 'src/chat/chat.service';
-import { RoomService } from 'src/room/room.service';
-// interface Message {
-//   id: number;
-//   message: string;
-//   createdAt: string;
-//   sender?: string;
-//   roomId?: number;
-//   file?: any;
-// }
+import { ChatService } from 'src/modules/chat/chat.service';
+import { RoomService } from 'src/modules/room/room.service';
+
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer()
-  server: Server;
+  @WebSocketServer() server: Server;
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly chatService: ChatService,
     private readonly roomService: RoomService,
   ) {}
+
   async handleConnection(client: Socket) {
     try {
       const { profile } = client.handshake.auth;
@@ -43,10 +36,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       client.data.user = profile;
-
-      console.log(
-        `Client ${client.id} connected with user profile: ${JSON.stringify(profile.id)}`,
-      );
+      console.log(`Client ${client.id} connected with profile: ${profile.id}`);
     } catch (error) {
       console.error('Authentication failed:', error.message);
       client.disconnect();
@@ -63,37 +53,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() message: { message: string; roomId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const userProfile = client.data.user;
-
-    console.log(
-      `Received message from client ${client.id} (user profile: ${JSON.stringify(userProfile.id)}):`,
-      message,
-    );
+    const { user } = client.data;
+    console.log(`Message from ${client.id} (user: ${user.id}):`, message);
 
     try {
-      const sending = await this.chatService.sendMessage(
+      const sentMessage = await this.chatService.sendMessage(
         parseInt(message.roomId, 10),
-        userProfile.id,
+        user.id,
         message.message,
       );
+
       this.server.to(message.roomId).emit('receiveMessage', {
-        id: sending.id,
-        createdAt: sending.createdAt,
+        id: sentMessage.id,
+        createdAt: sentMessage.createdAt,
         roomId: message.roomId,
-        senderId: sending.senderId,
+        senderId: sentMessage.senderId,
         message: message.message,
         sender: {
-          email: sending.sender.email,
-          picture: sending.sender.picture,
+          email: sentMessage.sender.email,
+          picture: sentMessage.sender.picture,
         },
       });
 
-      console.log(`Message sent to room ${message.roomId}:`, {
+      console.log(`Sent to room ${message.roomId}:`, {
         content: message.message,
-        sender: userProfile.email,
+        sender: user.email,
       });
     } catch (error) {
-      console.error('Failed to send message:', error.message);
+      console.error('Send message failed:', error.message);
       client.emit('error', { message: 'Failed to send message' });
     }
   }
@@ -103,25 +90,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() roomId: { roomId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const userProfile = client.data.user;
-
-    console.log(
-      `Client ${client.id} (user profile: ${JSON.stringify(userProfile.id)}) joining room ${roomId.roomId}`,
-    );
+    const { user } = client.data;
+    console.log(`Client ${client.id} (user: ${user.id}) joining room ${roomId.roomId}`);
 
     try {
-      await this.roomService.addUserToRoom(
-        parseInt(roomId.roomId, 10),
-        userProfile.id,
-      );
+      await this.roomService.addUserToRoom(parseInt(roomId.roomId, 10), user.id);
       client.join(roomId.roomId);
       client.emit('joinedRoom', { roomId: roomId.roomId });
 
-      console.log(
-        `Client ${client.id} (user profile: ${JSON.stringify(userProfile.id)}) successfully joined room ${roomId.roomId}`,
-      );
+      console.log(`Client ${client.id} joined room ${roomId.roomId}`);
     } catch (error) {
-      console.error('Failed to join room:', error.message);
+      console.error('Join room failed:', error.message);
       client.emit('error', { message: 'Failed to join room' });
     }
   }
@@ -131,24 +110,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    const userProfile = client.data.user;
-    console.log(
-      `Client ${client.id} (user profile: ${JSON.stringify(userProfile.id)}) leaving room ${roomId}`,
-    );
+    const { user } = client.data;
+    console.log(`Client ${client.id} (user: ${user.id}) leaving room ${roomId}`);
 
     try {
-      await this.roomService.removeUserFromRoom(
-        parseInt(roomId, 10),
-        userProfile.id,
-      );
+      await this.roomService.removeUserFromRoom(parseInt(roomId, 10), user.id);
       client.leave(roomId);
       client.emit('leftRoom', roomId);
 
-      console.log(
-        `Client ${client.id} (user profile: ${JSON.stringify(userProfile.id)}) left room ${roomId}`,
-      );
+      console.log(`Client ${client.id} left room ${roomId}`);
     } catch (error) {
-      console.error('Failed to leave room:', error.message);
+      console.error('Leave room failed:', error.message);
       client.emit('error', { message: 'Failed to leave room' });
     }
   }

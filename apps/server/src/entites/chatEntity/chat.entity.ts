@@ -1,5 +1,6 @@
-import { Room } from '../../room/entity/room.entity';
-import { User } from '../../user/entity/user.entity';
+import { Room } from "../roomEntity/room.entity";
+import { User } from "../userEntity/user.entity";
+
 
 export class Chat {
   id: number;
