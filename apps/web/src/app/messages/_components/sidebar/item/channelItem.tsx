@@ -27,7 +27,7 @@ const ChannelItem: React.FC<ChannelItemProps> = ({ channel, index }) => (
             <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center">
               {channel.unread > 0 && (
                   <span className="flex items-center justify-center w-5 h-5 text-xs text-white bg-green-500 rounded-full">
-                  {channel.unread}
+                    {channel.unread}
                   </span>
               )}            
             </div>

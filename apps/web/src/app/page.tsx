@@ -10,7 +10,7 @@ export default function Home() {
     <div className="w-full min-h-screen bg-gradient-to-br via-white  from-purple-400 to-blue-500">
       <Navbar />
       <HeroSection />
-      {/* <Features /> */}
+      <Features />
       <MarqueeReviews />
       <CallToAction />
       <Footer />

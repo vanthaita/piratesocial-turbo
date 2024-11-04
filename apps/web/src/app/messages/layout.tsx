@@ -16,8 +16,9 @@ export default function MessageLayout({
     <div className="flex h-screen w-full">
       <Sidebar className={`md:block ${isMobile && showChildren ? "hidden md:block" : "block"}`} />
       <main className={`relative flex-grow ${isMobile && showChildren ? "w-full" : "hidden md:block"}`}>
-        {children}
-        <Suspense fallback={<Loading />}/>
+        <Suspense fallback={<Loading />}>
+          {children}
+        </Suspense>
       </main>
     </div>
   );

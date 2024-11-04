@@ -1,32 +1,33 @@
 import React from 'react';
-import { FaNetworkWired, FaCoins, FaShieldAlt } from 'react-icons/fa';
+import { FaAnchor, FaChessKnight, FaUsers } from 'react-icons/fa';
+
 const featuresData = [
   {
-    title: "Decentralized Network",
-    description: "No central authority; full control of your data.",
-    icon: <FaNetworkWired />, 
+    title: "Crew Collaboration",
+    description: "Join forces with fellow pirates to achieve common goals.",
+    icon: <FaUsers />,
   },
   {
-    title: "Earn Tokens",
-    description: "Get rewarded for engaging and contributing to the community.",
-    icon: <FaCoins />, 
+    title: "Treasure Hunting",
+    description: "Discover rewards hidden across the seven seas.",
+    icon: <FaChessKnight />,
   },
   {
-    title: "Secure and Private",
-    description: "Your data, your privacy. Protected by blockchain technology.",
-    icon: <FaShieldAlt />, 
+    title: "Safe Haven",
+    description: "A secure community where your secrets are safe.",
+    icon: <FaAnchor />,
   },
 ];
 
 export default function Features() {
   return (
-    <section id="features" className="relative py-20 px-6  overflow-hidden mb-10">
+    <section id="features" className="relative py-20 px-6 overflow-hidden mb-10">
       <div className="bg-gradient-to-r from-orange-400 to-red-500 opacity-20 w-80 h-80 rounded-full blur-xl absolute"></div>
       <div className="bg-gradient-to-r from-blue-300 to-purple-500 opacity-20 w-64 h-64 rounded-full blur-xl absolute bottom-0 right-20"></div>
 
       <div className="relative max-w-6xl mx-auto text-center">
         <h2 className="text-5xl font-extrabold text-gray-800 mb-12 drop-shadow-lg">
-          Features
+          Pirates Social Features
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {featuresData.map((feature, index) => (
