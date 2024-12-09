@@ -10,6 +10,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { RoomModule } from './modules/room/room.module';
 import { RoomUserModule } from './modules/room-user/room-user.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { FeedPostModule } from './modules/feed/feed.post.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuthModule } from './modules/auth/auth.module';
     RoomUserModule,
     PrismaModule,
     AuthModule,
+    FeedPostModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',

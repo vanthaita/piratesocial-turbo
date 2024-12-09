@@ -10,21 +10,38 @@ import {
   Heart,
   MoreHorizontal,
 } from "lucide-react";
+import { caltimeAgo } from "@/lib/timeAgo";
 
-type FeedPostProps = {
-  username: string;
-  handle: string;
-  time: string;
+interface User {
+  id: number;
+  name: string;
+  providerId: string;
+  picture?: string;
+}
+
+interface PostData {
+  id: number;
+  userId: number;
   content: string;
-  imageUrl?: string;
-};
+  imagesUrl: string[];
+  createdAt: string;
+  user: User;
+  likes: any[];
+  comments: any[];
+  commentsCount: number;
+  likesCount: number;
+  retweetsCount: number;
+}
 
-const FeedPost: React.FC<FeedPostProps> = ({
-  username,
-  handle,
-  time,
+const FeedPost: React.FC<PostData> = ({
+  id,
   content,
-  imageUrl,
+  imagesUrl,
+  createdAt,
+  user,
+  likesCount,
+  commentsCount,
+  retweetsCount,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [comment, setComment] = useState("");
@@ -44,17 +61,17 @@ const FeedPost: React.FC<FeedPostProps> = ({
         <div className="flex items-start space-x-3">
           <div className="w-12 h-12 rounded-full overflow-hidden">
             <img
-              src="https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:4youk6koejgwe5m4lennnn4g/bafkreie7waea3t4ertvur5gosqjuog7slag32mux55t75rba6t6xe3t5lu@jpeg"
-              alt={`${username} profile`}
+              src={user.picture}
+              alt={`${user.name} profile`}
               className="object-cover w-full h-full"
             />
           </div>
           <div className="flex-1">
             <div className="flex justify-between">
               <div>
-                <p className="font-semibold text-gray-900">{username}</p>
+                <p className="font-semibold text-gray-900">{user.name}</p>
                 <p className="text-sm text-gray-600">
-                  {handle} · {time}
+                  {user.providerId} · {caltimeAgo(createdAt)}
                 </p>
               </div>
               <button className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -64,38 +81,35 @@ const FeedPost: React.FC<FeedPostProps> = ({
             <div className="mt-2 text-gray-800">
               <p className="text-base">{content}</p>
             </div>
-            {imageUrl && (
+            {imagesUrl.length > 0 && (
               <div className="mt-4 flex justify-center">
                 <img
-                  src={imageUrl}
+                  src={imagesUrl[0]}
                   alt="Post content"
                   className="rounded-lg object-contain w-full h-auto"
                   style={{ maxWidth: "95%", maxHeight: "90%" }}
                 />
               </div>
             )}
-
-
           </div>
         </div>
 
         <div className="mt-4 flex justify-around pt-3 text-gray-500 text-sm">
           <button className="flex items-center space-x-1 hover:text-red-500 transition-all">
             <Heart size={18} />
-            <span>Like</span>
+            <span>{likesCount} Like</span>
           </button>
           <button
             className="flex items-center space-x-1 hover:text-blue-500 transition-all"
             onClick={handleCommentClick}
           >
             <MessageCircle size={18} />
-            <span>Comment</span>
+            <span>{commentsCount} Comment</span>
           </button>
           <button className="flex items-center space-x-1 hover:text-green-500 transition-all">
             <Repeat size={18} />
-            <span>Retweet</span>
+            <span>{retweetsCount} Retweet</span>
           </button>
-          
         </div>
       </div>
 
@@ -104,7 +118,7 @@ const FeedPost: React.FC<FeedPostProps> = ({
           <div className="bg-white rounded-2xl w-11/12 max-w-lg shadow-xl">
             <div className="flex justify-between items-center p-5">
               <p className="font-bold text-gray-800 text-lg">
-                Reply to {username}
+                Reply to {user.name}
               </p>
               <button
                 onClick={closeModal}
@@ -118,13 +132,13 @@ const FeedPost: React.FC<FeedPostProps> = ({
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full overflow-hidden">
                   <img
-                    src="https://via.placeholder.com/40"
-                    alt={`${username} profile`}
+                    src={user.picture}
+                    alt={`${user.name} profile`}
                     className="object-cover w-full h-full"
                   />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">{username}</p>
+                  <p className="font-semibold text-gray-900">{user.name}</p>
                   <p className="text-sm text-gray-600">{content}</p>
                 </div>
               </div>

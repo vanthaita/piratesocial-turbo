@@ -11,43 +11,52 @@ datasource db {
 }
 
 model User {
-  id               Int                @id @default(autoincrement())
-  name             String
-  email            String             @unique
-  password         String?
-  givenName        String?
-  familyName       String?
-  picture          String?
-  providerId       String?
-  createdAt        DateTime           @default(now())
-  messages         Chat[]             @relation("UserMessages")
-  rooms            RoomUser[]
-
-  messageReactions MessageReaction[]  // Relation to MessageReaction
-  notifications    Notification[]     // Relation to Notification
-  pinnedMessages   PinnedMessage[]    // Relation to PinnedMessage
+  id             Int                @id @default(autoincrement())
+  name           String
+  email          String             @unique
+  password       String?
+  givenName      String?
+  familyName     String?
+  picture        String?
+  providerId     String?
+  createdAt      DateTime           @default(now())
+  messages       Chat[]             @relation("UserMessages")
+  rooms          RoomUser[]
+  notifications  Notification[]
+  pinnedMessages PinnedMessage[]
+  feedPosts      FeedPost[]         // Relation to FeedPost
+  feedLikes      FeedPostLike[]     // Likes by the user
+  feedComments   FeedPostComment[]  // Comments by the user
+  retweets       Retweet[]          // Retweets by the user
+  following      Following[]        @relation("UserFollowing")
+  followers      Following[]        @relation("UserFollowers")
 }
 
 model Chat {
-  id        Int       @id @default(autoincrement())
-  roomId    Int
-  senderId  Int
-  message  String  // Changed to plural to indicate multiple messages
-  createdAt DateTime   @default(now())
-  room      Room       @relation(fields: [roomId], references: [id])
-  sender    User       @relation("UserMessages", fields: [senderId], references: [id])
-  attachments     Attachment[]     // Relation to Attachment
-  reactions       MessageReaction[] // Relation to MessageReaction
-  pinnedMessages  PinnedMessage[]  //Relation to PinnedMessage
+  id            Int              @id @default(autoincrement())
+  roomId        Int?
+  senderId      Int
+  message       String
+  createdAt     DateTime         @default(now())
+  room          Room?            @relation(fields: [roomId], references: [id])
+  sender        User             @relation("UserMessages", fields: [senderId], references: [id])
+  attachments   Attachment[]     // Relation to Attachment
+  pinnedMessages PinnedMessage[]
 }
 
 model Room {
-  id             Int             @id @default(autoincrement())
+  id             Int              @id @default(autoincrement())
   name           String
-  createdAt      DateTime        @default(now())
+   type      RoomType   @default(ONE_TO_ONE) 
+  createdAt      DateTime         @default(now())
   chats          Chat[]
   users          RoomUser[]
-  pinnedMessages PinnedMessage[] // Relation to PinnedMessage
+  pinnedMessages PinnedMessage[]
+}
+
+enum RoomType {
+  ONE_TO_ONE
+  GROUP_CHAT
 }
 
 model RoomUser {
@@ -61,48 +70,90 @@ model RoomUser {
 
 model Attachment {
   id            Int      @id @default(autoincrement())
-  chatId     Int
+  chatId        Int
   fileType      String
   filePath      String
   fileSize      Int?
   thumbnailPath String?
-  chat       Chat   @relation(fields: [chatId], references: [id])
-}
-
-enum ReactionType {
-  LIKE
-  LOVE
-  LAUGH
-  SAD
-  ANGRY
-}
-
-model MessageReaction {
-  id           Int        @id @default(autoincrement())
-  chatId    Int
-  userId       Int
-  reactionType ReactionType
-  createdAt    DateTime    @default(now())
-  chat         Chat     @relation(fields: [chatId], references: [id])
-  user         User        @relation(fields: [userId], references: [id])
+  chat          Chat     @relation(fields: [chatId], references: [id])
 }
 
 model Notification {
-  id              Int      @id @default(autoincrement())
-  userId          Int
-  message         String
-  seen            Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id])
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  message    String
+  seen       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
 }
 
 model PinnedMessage {
-  id              Int      @id @default(autoincrement())
-  chatId       Int
-  userId          Int
-  pinnedAt        DateTime @default(now())
-  roomId          Int     // Room ID is nullable, which allows for a pinned message not necessarily tied to a room
-  chat         Chat  @relation(fields: [chatId], references: [id])
-  user            User     @relation(fields: [userId], references: [id])
-  room            Room?    @relation(fields: [roomId], references: [id])
+  id       Int      @id @default(autoincrement())
+  chatId   Int
+  userId   Int
+  pinnedAt DateTime @default(now())
+  roomId   Int?
+  chat     Chat     @relation(fields: [chatId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  room     Room?    @relation(fields: [roomId], references: [id])
+}
+
+model FeedPost {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  content     String
+  imagesUrl   String[]         // Array of image URLs
+  createdAt   DateTime         @default(now())
+  likesCount  Int              @default(0)
+  user        User             @relation(fields: [userId], references: [id])
+  likes       FeedPostLike[]   // Relation to likes
+  comments    FeedPostComment[] // Relation to comments
+  retweets    Retweet[]        // Relation to retweets
+}
+
+model FeedPostLike {
+  id          Int      @id @default(autoincrement())
+  postId      Int
+  userId      Int
+  createdAt   DateTime @default(now())
+  post        FeedPost @relation(fields: [postId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  @@unique([postId, userId])  // A user can like a post only once
+}
+
+model FeedPostComment {
+  id          Int      @id @default(autoincrement())
+  postId      Int
+  userId      Int
+  content     String
+  createdAt   DateTime @default(now())
+  post        FeedPost @relation(fields: [postId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Retweet {
+  id          Int      @id @default(autoincrement())
+  postId      Int
+  userId      Int
+  createdAt   DateTime @default(now())
+  post        FeedPost @relation(fields: [postId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  @@unique([postId, userId])  // A user can retweet a post only once
+}
+
+model Following {
+  id       Int      @id @default(autoincrement())
+  followerId Int
+  followeeId Int
+  createdAt  DateTime @default(now())
+  follower  User      @relation("UserFollowing", fields: [followerId], references: [id])
+  followee  User      @relation("UserFollowers", fields: [followeeId], references: [id])
+  @@unique([followerId, followeeId])  // Prevent duplicate follows
+}
+
+model TrendingTopic {
+  id        Int      @id @default(autoincrement())
+  hashtag   String   @unique
+  postCount Int      @default(0) // Tracks the number of posts associated with the hashtag
+  updatedAt DateTime @updatedAt
 }

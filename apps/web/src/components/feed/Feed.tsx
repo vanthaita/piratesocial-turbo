@@ -1,67 +1,61 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import { useState, useEffect } from 'react';
 import { ScrollArea } from '../ui/scroll-area';
 import FeedPost from './FeedPost';
+import axiosInstance from '@/helper/axiosIntance';
+interface User {
+  id: number;
+  name: string;
+  providerId: string;
+  picture: string;
+}
 
+interface PostData {
+  id: number;
+  userId: number;
+  content: string;
+  imagesUrl: string[];
+  createdAt: string;
+  user: User;
+  likes: any[];
+  comments: any[];
+  commentsCount: number;
+  likesCount: number;
+  retweetsCount: number;
+}
 const CustomTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('discover');
-  const [posts, setPosts] = useState([
-    {
-      username: "Weeder",
-      handle: "@weeder.bsky.social",
-      imageUrl: "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:4youk6koejgwe5m4lennnn4g/bafkreie7waea3t4ertvur5gosqjuog7slag32mux55t75rba6t6xe3t5lu@jpeg",
-      time: "8h",
-      content: "Doing some research into folding proteins (making an omelette)",
-      comments: 67,
-      shares: 167,
-      likes: 2300,
-    },
-    {
-      username: "Meme Hayes",
-      handle: "@meme-hayes.bsky.social",
-      imageUrl: "https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:fpgl4bkr6w45tyzynlnhog6r/bafkreieoa7hdcd6gavnz7ojyl7hhk22cyd6gvehvhipqrypex2644ke7z4@jpeg",
-      time: "9h",
-      content: "The older I get, the more I realize why Tupac hated everybody.",
-      comments: 71,
-      shares: 310,
-      likes: 3600,
-    },
-  ]);
+  const [posts, setPosts] = useState<PostData[]>([]);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const loadMorePosts = () => {
-    const newPosts = [
-      {
-        username: "New User 1",
-        handle: "@newuser1.bsky.social",
-        imageUrl: "https://example.com/image1.jpg",
-        time: "2h",
-        content: "Another post added!",
-        comments: 5,
-        shares: 20,
-        likes: 150,
-      },
-      {
-        username: "New User 2",
-        handle: "@newuser2.bsky.social",
-        imageUrl: "https://example.com/image2.jpg",
-        time: "3h",
-        content: "Yet another post!",
-        comments: 8,
-        shares: 30,
-        likes: 200,
-      },
-    ];
-    setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+  const loadPosts = async (skip: number, take: number) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get('feed-posts/all', {
+        params: { skip, take },
+      });
+      const data = response.data;
+      setPosts((prevPosts) => [...prevPosts, ...data]);
+      console.log(data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
+    }
   };
-  
-
+  useEffect(() => {
+    loadPosts(page * 20, 20);
+  }, [page]);
   useEffect(() => {
     const handleScroll = () => {
       const scrollArea = document.getElementById('scroll-area');
       if (scrollArea) {
         const isBottom = scrollArea.scrollHeight - scrollArea.scrollTop === scrollArea.clientHeight;
-        if (isBottom) {
-          loadMorePosts();
+        if (isBottom && !loading) {
+          setPage((prevPage) => prevPage + 1);
         }
       }
     };
@@ -76,10 +70,10 @@ const CustomTabs: React.FC = () => {
         scrollArea.removeEventListener('scroll', handleScroll);
       }
     };
-  }, []);
+  }, [loading]);
 
   return (
-    <div className="mx-auto h-auto">
+    <div className="mx-auto h-full w-full">
       <div className="flex sticky top-0 z-10 bg-white border-gray-200 shadow-md">
         <button
           className={`px-4 py-2 text-lg font-semibold ${

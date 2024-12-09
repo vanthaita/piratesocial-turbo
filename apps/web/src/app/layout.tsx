@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import SidebarLeft from "@/components/SidebarLeft";
 import SidebarRight from "@/components/SidebarRight";
 import Provider from "@/components/Provider/Provider";
+import { AuthProvider } from "@/context/AuthContext";
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -73,6 +74,7 @@ export default function RootLayout({
         )}
       >
         <ToggleProvider>
+        <AuthProvider>
           <ToastProvider>
                 <Provider>
                   {children}
@@ -80,6 +82,7 @@ export default function RootLayout({
               <Suspense fallback={<Loading />} />
             <ToastContainer />
           </ToastProvider>
+          </AuthProvider>
         </ToggleProvider>
       </body>
     </html>
