@@ -7,6 +7,9 @@ import ToastContainer from "@/components/ToastContainer";
 import { ToastProvider } from "@/context/ToastContext";
 import Loading from "./loading";
 import { Suspense } from "react";
+import SidebarLeft from "@/components/SidebarLeft";
+import SidebarRight from "@/components/SidebarRight";
+import Provider from "@/components/Provider/Provider";
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -63,20 +66,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body  className={cn(
-          "min-h-screen bg-background font-sans antialiased sidebar",
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
           fontSans.variable
-        )}>
-          <ToggleProvider>
-            <ToastProvider>
-              <div className="flex h-screen">
-                {children}
-                <Suspense fallback={<Loading />}/>
-              </div>
-              <ToastContainer />
-            </ToastProvider>
-          </ToggleProvider>
-        </body>
+        )}
+      >
+        <ToggleProvider>
+          <ToastProvider>
+                <Provider>
+                  {children}
+                </Provider>
+              <Suspense fallback={<Loading />} />
+            <ToastContainer />
+          </ToastProvider>
+        </ToggleProvider>
+      </body>
     </html>
   );
 }
+

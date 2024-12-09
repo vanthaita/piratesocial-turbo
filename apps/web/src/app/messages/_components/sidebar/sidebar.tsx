@@ -135,7 +135,7 @@ const Sidebar = ({className} : {className: any}) => {
         ))}
       </ul>
     </aside>
-    {showReel && (
+    {/* {showReel && (
         <ReelStory
           reels={reels}
           currentReelIndex={currentReelIndex}
@@ -143,7 +143,7 @@ const Sidebar = ({className} : {className: any}) => {
           nextReel={nextReel}
           prevReel={prevReel}
         />
-      )}
+      )} */}
      <div
         className={`transform ease-in-out duration-300 fixed top-0 left-0 h-full ${
           showProfile ? 'translate-x-0 w-full md:w-1/4' : '-translate-x-full'

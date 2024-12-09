@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const privatePath = ['/messages'];
+const privatePath = ['/in'];
 const authPath = ['/sign-in', '/sign-up'];
 
 export function middleware(request: NextRequest) {

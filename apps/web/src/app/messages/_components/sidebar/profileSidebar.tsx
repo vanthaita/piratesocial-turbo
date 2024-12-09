@@ -1,13 +1,12 @@
 'use client';
-import { XIcon, Settings, Wallet, User, LogOut, Mail, UserPlus, ArrowLeft } from 'lucide-react';
+import { XIcon, Settings, Wallet, User, LogOut, Mail, UserPlus, ArrowLeft, Newspaper } from 'lucide-react';
 import React, { useState } from 'react';
 import MyProfile from './option/myProfile';
 import WalletPage from './option/walletPage';
 import SavedMessages from './option/savedMessage';
 import InviteFriends from './option/inviteFriend';
 import AccountSettings from './option/settingsAccount';
-
-
+import { useRouter } from 'next/navigation';
 interface ProfileSidebarProps {
   showProfile: boolean;
   setShowProfile: React.Dispatch<React.SetStateAction<boolean>>;
@@ -21,6 +20,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ showProfile, setShowPro
   const [showAccountSettings, setShowAccountSettings] = useState<boolean>(false);
   const [showWallet, setShowWallet] = useState<boolean>(false);
   const [isShowOptionProfile, setIShowOptionProfile] = useState<boolean>(false);
+  const router = useRouter();
   const renderSelectedOption = () => {
     switch (selectedOption) {
       case 'MyProfile':
@@ -33,6 +33,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ showProfile, setShowPro
         return <InviteFriends showInviteFriends={showInviteFriends} setShowInviteFriends={setshowInviteFriends} isShowOptionProfile={isShowOptionProfile} setIShowOptionProfile={setIShowOptionProfile} />;
       case 'AccountSettings':
         return <AccountSettings showAccountSettings={showAccountSettings} setShowAccountSettings={setShowAccountSettings} isShowOptionProfile={isShowOptionProfile} setIShowOptionProfile={setIShowOptionProfile}/>;
+      case 'Feed': 
+        return '';
       default:
         return null;
     }
@@ -65,6 +67,15 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ showProfile, setShowPro
                 setSelectedOption('MyProfile');
                 setShowMyProfile(true);
                 setIShowOptionProfile(true);
+              }}
+            />
+             <SidebarOption
+              label="New Feed"
+              icon={<Newspaper className="w-5 h-5 mr-3" />}
+              onClick={() => {
+                setShowProfile(false)
+                setIShowOptionProfile(false);
+                router.push('/')
               }}
             />
             <SidebarOption
@@ -109,6 +120,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ showProfile, setShowPro
               icon={<LogOut className="w-5 h-5 mr-3" />}
               onClick={() => setSelectedOption('LogOut')}
             />
+            
           </ul>
         </div>
       </aside>

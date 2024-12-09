@@ -1,19 +1,10 @@
-import CallToAction from "@/components/home/callToAction";
-import Features from "@/components/home/features";
-import Footer from "@/components/home/footer";
-import HeroSection from "@/components/home/heroSection";
-import MarqueeReviews from "@/components/home/reviews";
-import Navbar from "@/components/navbar";
+import Feed from "@/components/feed/Feed";
 
 export default function Home() {
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br via-white  from-purple-400 to-blue-500">
-      <Navbar />
-      <HeroSection />
-      <Features />
-      <MarqueeReviews />
-      <CallToAction />
-      <Footer />
+    <div className="w-full h-auto flex flex-col items-center">
+      <h1 className="text-3xl font-bold mb-4 text-black">Pirate Social</h1>
+      <Feed />
     </div>
   );
 }
