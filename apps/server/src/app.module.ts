@@ -11,6 +11,7 @@ import { RoomModule } from './modules/room/room.module';
 import { RoomUserModule } from './modules/room-user/room-user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { FeedPostModule } from './modules/feed/feed.post.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { FeedPostModule } from './modules/feed/feed.post.module';
     PrismaModule,
     AuthModule,
     FeedPostModule,
+    RedisModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
