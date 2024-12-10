@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+'use client'
 import React, { useState } from "react";
 import {
   Image as ImageIcon,
@@ -11,6 +12,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { caltimeAgo } from "@/lib/timeAgo";
+import axiosInstance from "@/helper/axiosIntance";
 
 interface User {
   id: number;
@@ -45,6 +47,7 @@ const FeedPost: React.FC<PostData> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const [likeCount, setLikeCount] = useState(likesCount);
 
   const handleCommentClick = () => {
     setIsModalOpen(true);
@@ -53,6 +56,43 @@ const FeedPost: React.FC<PostData> = ({
   const closeModal = () => {
     setIsModalOpen(false);
     setComment("");
+  };
+
+  const handleLike = async () => {
+    try {
+      await axiosInstance.post(`/feed-posts/${id}/like`);
+      setLikeCount(likeCount + 1);
+      alert("Post liked!");
+    } catch (error) {
+      console.error("Error liking post:", error);
+      alert("Could not like the post.");
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    try {
+      if (comment.trim()) {
+        await axiosInstance.post(`/feed-posts/${id}/comment`, { content: comment });
+        setComment("");
+        alert("Comment added!");
+        setIsModalOpen(false);
+      } else {
+        alert("Comment cannot be empty.");
+      }
+    } catch (error) {
+      console.error("Error commenting on post:", error);
+      alert("Could not add comment.");
+    }
+  };
+
+  const handleRetweet = async () => {
+    try {
+      await axiosInstance.post(`/feed-posts/${id}/retweet`);
+      alert("Post retweeted!");
+    } catch (error) {
+      console.error("Error retweeting post:", error);
+      alert("Could not retweet the post.");
+    }
   };
 
   return (
@@ -95,9 +135,12 @@ const FeedPost: React.FC<PostData> = ({
         </div>
 
         <div className="mt-4 flex justify-around pt-3 text-gray-500 text-sm">
-          <button className="flex items-center space-x-1 hover:text-red-500 transition-all">
+          <button
+            className="flex items-center space-x-1 hover:text-red-500 transition-all"
+            onClick={handleLike}
+          >
             <Heart size={18} />
-            <span>{likesCount} Like</span>
+            <span>{likeCount} Like</span>
           </button>
           <button
             className="flex items-center space-x-1 hover:text-blue-500 transition-all"
@@ -106,7 +149,10 @@ const FeedPost: React.FC<PostData> = ({
             <MessageCircle size={18} />
             <span>{commentsCount} Comment</span>
           </button>
-          <button className="flex items-center space-x-1 hover:text-green-500 transition-all">
+          <button
+            className="flex items-center space-x-1 hover:text-green-500 transition-all"
+            onClick={handleRetweet}
+          >
             <Repeat size={18} />
             <span>{retweetsCount} Retweet</span>
           </button>
@@ -171,7 +217,7 @@ const FeedPost: React.FC<PostData> = ({
               <div className="mt-4 flex justify-end">
                 <button
                   className="bg-blue-500 text-white px-5 py-2 rounded-full shadow hover:bg-blue-600 transition-all duration-200"
-                  onClick={closeModal}
+                  onClick={handleCommentSubmit}
                 >
                   Reply
                 </button>
