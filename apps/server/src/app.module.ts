@@ -12,6 +12,7 @@ import { RoomUserModule } from './modules/room-user/room-user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { FeedPostModule } from './modules/feed/feed.post.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { AwsS3Module } from './modules/aws/aws.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RedisModule } from './modules/redis/redis.module';
     AuthModule,
     FeedPostModule,
     RedisModule,
+    AwsS3Module,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
