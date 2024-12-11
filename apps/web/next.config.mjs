@@ -7,7 +7,7 @@ const withPWA = withPWAInit({
 });
 
 export default withPWA({
-  reactStrictMode: true,
+  reactStrictMode: false,
   images: {
     domains: [
       "lh3.googleusercontent.com",

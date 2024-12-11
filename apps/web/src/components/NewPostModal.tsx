@@ -5,29 +5,48 @@ import axiosInstance from "@/helper/axiosIntance";
 const NewPostModal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [content, setContent] = useState("");
+  const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const maxCharacters = 300;
+  const maxCharacters = 150;
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setContent("");
+    setImages([]);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setImages(files);
+  };
 
   const handleCreateNewPost = async () => {
-    if (!content.trim()) {
-      alert("Post content cannot be empty.");
+    if (!content.trim() && images.length === 0) {
+      alert("Post content or at least one image is required.");
       return;
     }
     setLoading(true);
+
     try {
-      const responseData = await axiosInstance.post("feed-posts", {
-        content,
+      const formData = new FormData();
+      formData.append("content", content);
+      images.forEach((image) => formData.append("images", image));
+
+      const responseData = await axiosInstance.post("feed-posts", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
+
       console.log("New post created successfully:", responseData);
-      setContent("");  
-      closeModal();   
-      window.location.reload(); 
+      setContent("");
+      setImages([]);
+      closeModal();
+      window.location.reload();
     } catch (e) {
       console.error("Error creating new post:", e);
-      alert("Failed to create a new post. Please try again.");
+      alert(`${e}`);
     } finally {
       setLoading(false);
     }
@@ -65,9 +84,16 @@ const NewPostModal = () => {
               ></textarea>
               <div className="flex items-center justify-between mt-3">
                 <div className="flex space-x-4 text-gray-500">
-                  <button className="hover:text-black transition-all">
+                  <label className="hover:text-black transition-all cursor-pointer">
                     <ImageIcon size={20} />
-                  </button>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
                   <button className="hover:text-black transition-all">
                     <Video size={20} />
                   </button>
@@ -79,6 +105,29 @@ const NewPostModal = () => {
                   {maxCharacters - content.length} / {maxCharacters}
                 </span>
               </div>
+              {images.length > 0 && (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {images.map((image, idx) => (
+                    <div key={idx} className="relative">
+                      <img
+                        src={URL.createObjectURL(image)}
+                        alt="Preview"
+                        className="w-full h-20 object-cover rounded-md"
+                      />
+                      <button
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                        onClick={() =>
+                          setImages((prev) =>
+                            prev.filter((_, index) => index !== idx)
+                          )
+                        }
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="p-4 border-t flex justify-end">
               <button

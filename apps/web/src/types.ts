@@ -18,4 +18,33 @@ export interface Message {
   picture?: string;
   file?: { name: string; type: string; size: number } | null;
 }
-  
+
+
+export interface User {
+  id: number;
+  name: string;
+  providerId: string;
+  picture?: string;
+}
+export interface Comment {
+  id: number;
+  userId: number;
+  content: string;
+  createdAt: string;
+  user: User;
+}
+
+export interface PostData {
+  id: number;
+  userId: number;
+  content: string;
+  imagesUrl: string[];
+  createdAt: string;
+  user: User;
+  likes: any[];
+  comments: Comment[];
+  commentsCount: number;
+  likesCount: number;
+  retweetsCount: number;
+  isLikedByUser?: boolean;
+}

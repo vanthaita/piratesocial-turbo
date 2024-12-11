@@ -4,27 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ScrollArea } from '../ui/scroll-area';
 import FeedPost from './FeedPost';
 import axiosInstance from '@/helper/axiosIntance';
-
-interface User {
-  id: number;
-  name: string;
-  providerId: string;
-  picture: string;
-}
-
-interface PostData {
-  id: number;
-  userId: number;
-  content: string;
-  imagesUrl: string[];
-  createdAt: string;
-  user: User;
-  likes: any[];
-  comments: any[];
-  commentsCount: number;
-  likesCount: number;
-  retweetsCount: number;
-}
+import { PostData } from '@/types';
 
 const FeedTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('discover');

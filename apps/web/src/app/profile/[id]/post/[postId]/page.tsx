@@ -1,150 +1,249 @@
-'use client'
-import React from 'react';
+/* eslint-disable @next/next/no-img-element */
+'use client';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { caltimeAgo } from '@/lib/timeAgo';
+import ImageModal from '@/components/feed/ImageModal';
+import CommentModal from '@/components/feed/CommentModal';
+import InteractionButtons from '@/components/feed/InteractionButtons';
+import axiosInstance from '@/helper/axiosIntance';
+import { usePathname } from 'next/navigation';
+import { Comment, PostData } from '@/types';
+import { ArrowLeftIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-interface User {
-  id: number;
-  name: string;
-  providerId: string;
-  picture?: string;
-}
-
-interface Comment {
-  id: number;
-  userId: number;
-  content: string;
-  createdAt: string;
-  user: User;
-}
-
-interface PostData {
-  id: number;
-  userId: number;
-  content: string;
-  imagesUrl: string[];
-  createdAt: string;
-  user: User;
-  likes: any[]; // Consider refining the type if possible
-  comments: Comment[];
-  commentsCount: number;
-  likesCount: number;
-  retweetsCount: number;
-}
-
-interface PostViewProps {
-  post: PostData;
-}
-
-const testPost: PostData = {
-  id: 1,
-  userId: 123,
-  content: "This is a sample tweet for testing the UI. #testing #UI #React",
-  imagesUrl: [
-    "https://via.placeholder.com/400x200",
-    "https://via.placeholder.com/400x200",
-    "https://via.placeholder.com/400x200"
-  ],
-  createdAt: new Date().toISOString(),
-  user: {
-    id: 123,
-    name: "John Doe",
-    providerId: "provider_123",
-    picture: "https://via.placeholder.com/40"
-  },
-  likes: [{ userId: 124 }, { userId: 125 }],
-  comments: [
-    {
-      id: 1,
-      userId: 124,
-      content: "Great post! Very informative.",
-      createdAt: new Date().toISOString(),
-      user: {
-        id: 124,
-        name: "Jane Smith",
-        providerId: "provider_124",
-        picture: "https://via.placeholder.com/40"
-      }
-    },
-    {
-      id: 2,
-      userId: 125,
-      content: "Thanks for sharing this!",
-      createdAt: new Date().toISOString(),
-      user: {
-        id: 125,
-        name: "Alice Brown",
-        providerId: "provider_125",
-        picture: "https://via.placeholder.com/40"
-      }
-    }
-  ],
-  commentsCount: 2,
-  likesCount: 2,
-  retweetsCount: 5
+interface Post extends PostData {
+  isLikedByUser: boolean;
 };
 
-const PostView: React.FC<PostViewProps> = ({ post = testPost }) => {
-  // Check if the post object and its properties are defined
-  if (!post || !post.user) {
-    return <div>Loading...</div>; // Fallback UI if the post data is incomplete
-  }
+const TweetViewPage: React.FC = () => {
+  const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const pathname = usePathname();
+  const postId = parseInt(pathname.split('/')[4], 10);
+  const [post, setPost] = useState<Post | null>(null);
+  const TAKE = 10;
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [isLoadingComments, setIsLoadingComments] = useState<boolean>(false);
+  const skipRef = useRef(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const router = useRouter();
+  useEffect(() => {
+    if (postId) {
+      loadPostDetails(postId);
+    }
+  }, [postId]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime()) ? date.toLocaleString() : 'Invalid date';
+  const loadPostDetails = async (postId: number) => {
+    try {
+      const responsePost = await axiosInstance.get(`/feed-posts/${postId}/details`);
+      setPost(responsePost.data);
+    } catch (err) {
+      console.error('Error loading post details:', err);
+    }
   };
 
+  const loadComments = async () => {
+    if (isLoadingComments || !hasMore) return;
+    setIsLoadingComments(true);
+    try {
+      const responseComment = await axiosInstance.get(`/feed-posts/${postId}/comments/details`, {
+        params: { skip: skipRef.current * TAKE, take: TAKE },
+      });
+      const newComments = responseComment.data;
+      if (newComments.length === 0) {
+        setHasMore(false);
+      } else {
+        setComments((prevComments) => [...prevComments, ...newComments]);
+        skipRef.current += TAKE;
+      }
+    } catch (err) {
+      console.error('Error loading comments:', err);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const lastPostRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isLoadingComments || !node) return;
+
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadComments();
+        }
+      });
+
+      if (node) {
+        observerRef.current.observe(node);
+      }
+    },
+    [isLoadingComments, hasMore]
+  );
+
+  useEffect(() => {
+    if (postId) {
+      loadComments();
+    }
+  }, [postId]);
+
+  const openImageModal = (index: number): void => {
+    setSelectedImageIndex(index);
+    setIsImageModalOpen(true);
+  };
+
+  const closeImageModal = (): void => {
+    setIsImageModalOpen(false);
+    setSelectedImageIndex(null);
+  };
+
+  const handleCommentClick = (): void => {
+    setIsModalOpen(true);
+  };
+
+  const closeCommentModal = (): void => {
+    setIsModalOpen(false);
+  };
+
+  if (!post) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 max-w-xl mx-auto mb-4">
-      {/* User header */}
-      <div className="flex items-center mb-3">
-        <img
-          src={post.user.picture || 'https://via.placeholder.com/40'}
-          alt={`Profile picture of ${post.user.name}`}
-          className="w-10 h-10 rounded-full mr-3"
+    <div className="flex flex-col border-gray-200 hover:bg-gray-50 transition-colors">
+      <div className="flex items-start space-x-4 border-b border-gray-300">
+        <div className="flex-1 p-4">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-x-2">
+              <div>
+                <button onClick={() => router.back()}>
+                  <ArrowLeftIcon size={18}/>                  
+                </button>
+              </div>
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-300">
+                {post.user.picture && (
+                  <img
+                    src={post.user.picture}
+                    alt={`${post.user.name} profile`}
+                    className="object-cover w-full h-full"
+                  />
+                )}
+              </div>
+              <div className="flex flex-col">
+                <p className="font-semibold text-gray-900 text-lg">{post.user.name}</p>
+                <p className="text-sm text-gray-600">
+                  @{post.user.providerId} · {caltimeAgo(post.createdAt)}
+                </p>
+              </div>
+            </div>
+            <button className="px-4 py-2.5 rounded-full bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors shadow-md">
+              + Follow
+            </button>
+          </div>
+          <div className="mt-2 text-gray-800">
+            <p className="text-base">{post.content}</p>
+          </div>
+          {post.imagesUrl.length > 0 && (
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {post.imagesUrl.slice(0, 4).map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={image}
+                    alt={`Post content ${index + 1}`}
+                    className="rounded-lg object-cover w-full h-full cursor-pointer hover:opacity-90 transition-opacity"
+                    style={{ maxHeight: '150px' }}
+                    onClick={() => openImageModal(index)}
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div>
+            <InteractionButtons
+              likeCount={post.likesCount}
+              commentsCount={post.comments.length}
+              retweetsCount={post.likes.length}
+              handleCommentClick={handleCommentClick}
+              postId={post.id}
+              setLikeCount={(count) =>
+                setPost((prev) => (prev ? { ...prev, likesCount: count } : prev))
+              }
+              isLikedByUser={post.isLikedByUser}
+            />
+          </div>
+        </div>
+      </div>
+      <div className="mt-4">
+        <div className="mt-2 space-y-4 overflow-auto">
+          {comments.length > 0 ? (
+            comments.map((comment) => (
+              <div key={comment.id} className="flex flex-col items-start border-b border-gray-300 p-4">
+                <div className="flex items-center gap-x-2">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300">
+                    <img
+                      src={comment.user.picture}
+                      alt={`${comment.user.name} profile`}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-x-2">
+                      <p className="font-medium text-gray-900">{comment.user.name}</p>
+                      <p>@{comment.user.providerId}</p>
+                      <p>·</p>
+                      <p className="text-sm text-gray-600">{caltimeAgo(comment.createdAt)}</p>
+                    </div>
+                    <p className="mt-1 text-gray-800 text-sm">{comment.content}</p>
+                  </div>
+                </div>
+                {/* <div className="w-full mt-2">
+                  <InteractionButtons
+                    likeCount={post.likesCount}
+                    commentsCount={post.comments.length}
+                    retweetsCount={post.likes.length}
+                    handleCommentClick={handleCommentClick}
+                    postId={post.id}
+                    setLikeCount={(count) =>
+                      setPost((prev) => (prev ? { ...prev, likesCount: count } : prev))
+                    }
+                    isLikedByUser={post.isLikedByUser}
+                  />
+                </div> */}
+                <div ref={lastPostRef} className="invisible" />
+              </div>
+            ))
+          ) : (
+            <div className="flex items-center justify-center p-4">
+              <p className="text-gray-600 text-lg font-medium">No comments yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isImageModalOpen && (
+        <ImageModal
+          imagesUrl={post.imagesUrl}
+          onClose={closeImageModal}
         />
-        <div>
-          <p className="font-semibold text-gray-800">{post.user.name}</p>
-          <p className="text-gray-500 text-sm">{formatDate(post.createdAt)}</p>
-        </div>
-      </div>
-
-      {/* Post content */}
-      <p className="text-gray-800 mb-3">{post.content}</p>
-
-      {/* Images section */}
-      {post.imagesUrl.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-          {post.imagesUrl.map((url, index) => (
-            <img key={index} src={url} alt={`Post image ${index}`} className="rounded-lg" />
-          ))}
-        </div>
       )}
-
-      {/* Engagement metrics */}
-      <div className="flex justify-between items-center mt-4 text-gray-500">
-        <div className="flex items-center space-x-3">
-          <span className="flex items-center">
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17 9l5 5-5 5M3 5h18M3 19h18"></path>
-            </svg>
-            <span>{post.retweetsCount}</span>
-          </span>
-          <span className="flex items-center">
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 11c0-1.3-1-2.3-2.3-2.3h-7.4C6 8.7 5 9.7 5 11v2c0 1.3 1 2.3 2.3 2.3h7.4C17 13.3 19 12.3 19 11z"></path>
-            </svg>
-            <span>{post.likesCount}</span>
-          </span>
-          <span className="flex items-center">
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 7l9 9 9-9"></path>
-            </svg>
-            <span>{post.commentsCount}</span>
-          </span>
-        </div>
-      </div>
+       {isModalOpen && (
+        <CommentModal
+          comments={post.comments}
+          onClose={closeCommentModal}
+          user={post.user}
+          setIsModalOpen={setIsModalOpen}
+          content={post.content}
+          postId={post.id}
+        />
+      )}
     </div>
   );
 };
 
-export default PostView;
+export default TweetViewPage;
