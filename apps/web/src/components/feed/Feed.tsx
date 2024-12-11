@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -32,27 +31,28 @@ const FeedTabs: React.FC = () => {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [skip, setSkip] = useState(0);
   const TAKE = 10;
 
-  // Correctly type observerRef
+  const skipRef = useRef(0); 
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const isFirstLoad = useRef(true);
 
   const loadPosts = async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
     try {
-      const response = await axiosInstance.get(`feed-posts/all`, {
-        params: { skip, take: TAKE },
+      const response = await axiosInstance.get('feed-posts/all', {
+        params: { skip: skipRef.current, take: TAKE },
       });
       const data = response.data;
-      console.log(data);
+
       if (data.length === 0) {
         setHasMore(false);
       } else {
         setPosts((prevPosts) => [...prevPosts, ...data]);
-        setSkip((prevSkip) => prevSkip + TAKE);
+        skipRef.current += TAKE;
+        console.log('Updated Skip Value:', skipRef.current);
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -66,7 +66,7 @@ const FeedTabs: React.FC = () => {
       if (loading) return;
 
       if (observerRef.current) {
-        observerRef.current.disconnect(); 
+        observerRef.current.disconnect();
       }
 
       observerRef.current = new IntersectionObserver((entries) => {
@@ -76,21 +76,24 @@ const FeedTabs: React.FC = () => {
       });
 
       if (node) {
-        observerRef.current.observe(node); 
+        observerRef.current.observe(node);
       }
     },
-    [loading, hasMore, activeTab]
+    [loading, hasMore]
   );
 
   useEffect(() => {
-    setPosts([]); // Reset posts when switching tabs
-    setSkip(0);
-    setHasMore(true);
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
+
+    setPosts([]);
+    skipRef.current = 0;
+    setHasMore(true); 
     loadPosts();
   }, [activeTab]);
-  useEffect(() => {
-    console.log("Skip Time: ",skip);
-  }, [])
+
   return (
     <div className="mx-auto h-full w-full">
       <div className="flex sticky top-0 z-10 bg-white border-gray-200 shadow-md">
@@ -128,7 +131,6 @@ const FeedTabs: React.FC = () => {
           {!hasMore && !loading && (
             <p className="text-center my-4 text-gray-500">No more posts to display.</p>
           )}
-          {/* Invisible div for intersection observer */}
           <div ref={lastPostRef} className="invisible" />
         </div>
       </ScrollArea>

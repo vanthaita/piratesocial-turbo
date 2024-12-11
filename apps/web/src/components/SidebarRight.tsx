@@ -10,9 +10,9 @@ const SidebarRight = () => {
     { label: 'Market Trends' },
     { label: 'Hot Topics' },
   ];
-
+  
   return (
-    <aside className="w-[25%] h-full p-4 flex flex-col space-y-6 border-l border-gray-200 bg-gray-50 shadow-lg">
+    <aside className="w-[25%] h-full p-4 flex flex-col space-y-6 border-l border-gray-200 bg-gray-50">
       <div className="flex items-center gap-2 border border-gray-300 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
         <input
           type="text"

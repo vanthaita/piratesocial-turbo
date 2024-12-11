@@ -3,6 +3,7 @@ import { FeedPost, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ClientProxy } from '@nestjs/microservices';
 import { RedisService } from '../redis/redis.service';
+import { console } from 'inspector';
 
 @Injectable()
 export class FeedPostService {
@@ -18,29 +19,41 @@ export class FeedPostService {
   async getFeedAllPosts(skip = 0, take = 10) {
     const redisClient = this.redisService.getClient();
     const cacheKey = `${this.cacheKeyAllPosts}:${skip}:${take}`;
-  
+    
     // Check cache
     const cachedData = await redisClient.get(cacheKey);
+    console.log(cachedData);
     if (cachedData) {
       return JSON.parse(cachedData);
     }
   
-    // Fetch from DB
+    // Fetch from DB with proper pagination logic
     const posts = await this.prisma.feedPost.findMany({
-      skip,
-      take,
-      orderBy: { createdAt: 'asc' },
+      skip: skip,
+      take: take,
+      orderBy: { createdAt: 'desc' },  // Ensure ordering based on createdAt or another field
       include: {
         user: { select: { id: true, name: true, providerId: true, picture: true } },
         likes: true,
-        comments: true,
+        comments: {
+          select: {
+            user: {
+              select: { id: true, name: true, providerId: true, picture: true }
+            },
+            createdAt: true,
+            content: true,
+            userId: true,
+            postId: true,
+          }
+        },
         retweets: true,
       },
-      distinct: ['id'], // Ensure unique posts
+      distinct: ['id'],  // Ensure unique posts
     });
   
     // Store in cache with a TTL
-    await redisClient.set(cacheKey, JSON.stringify(posts), 'EX', 60);
+    await redisClient.set(cacheKey, JSON.stringify(posts), 'EX', 60);  // Cache expiry set to 60 seconds
+  
     return posts;
   }
   
