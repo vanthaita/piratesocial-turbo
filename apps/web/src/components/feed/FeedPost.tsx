@@ -20,6 +20,13 @@ interface User {
   providerId: string;
   picture?: string;
 }
+interface Comment {
+  id: number;
+  userId: number;
+  content: string;
+  createdAt: string;
+  user: User;
+}
 
 interface PostData {
   id: number;
@@ -29,7 +36,7 @@ interface PostData {
   createdAt: string;
   user: User;
   likes: any[];
-  comments: any[];
+  comments: Comment[];
   commentsCount: number;
   likesCount: number;
   retweetsCount: number;
@@ -44,6 +51,7 @@ const FeedPost: React.FC<PostData> = ({
   likesCount,
   commentsCount,
   retweetsCount,
+  comments,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [comment, setComment] = useState("");
@@ -97,9 +105,9 @@ const FeedPost: React.FC<PostData> = ({
 
   return (
     <>
-      <div className="border border-gray-300 transition-all duration-300 p-4 bg-white">
+      <div className="border border-gray-300 p-4 bg-white shadow-lg transition-all duration-300 hover:shadow-xl">
         <div className="flex items-start space-x-3">
-          <div className="w-12 h-12 rounded-full overflow-hidden">
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200">
             <img
               src={user.picture}
               alt={`${user.name} profile`}
@@ -109,7 +117,7 @@ const FeedPost: React.FC<PostData> = ({
           <div className="flex-1">
             <div className="flex justify-between">
               <div>
-                <p className="font-semibold text-gray-900">{user.name}</p>
+                <p className="font-semibold text-gray-900 text-lg">{user.name}</p>
                 <p className="text-sm text-gray-600">
                   {user.providerId} · {caltimeAgo(createdAt)}
                 </p>
@@ -161,11 +169,9 @@ const FeedPost: React.FC<PostData> = ({
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl w-11/12 max-w-lg shadow-xl">
-            <div className="flex justify-between items-center p-5">
-              <p className="font-bold text-gray-800 text-lg">
-                Reply to {user.name}
-              </p>
+          <div className="bg-white rounded-2xl w-11/12 max-w-lg shadow-xl overflow-hidden">
+            <div className="flex justify-between items-center p-5 border-b border-gray-200">
+              <p className="font-bold text-gray-800 text-lg">Reply to {user.name}</p>
               <button
                 onClick={closeModal}
                 className="text-gray-600 hover:text-gray-900 transition-colors"
@@ -176,7 +182,7 @@ const FeedPost: React.FC<PostData> = ({
 
             <div className="p-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300">
                   <img
                     src={user.picture}
                     alt={`${user.name} profile`}
@@ -190,7 +196,26 @@ const FeedPost: React.FC<PostData> = ({
               </div>
             </div>
 
-            <div className="p-4 border-t">
+            <div className="px-4 py-3 border-gray-200">
+              <div className="space-y-2">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="flex items-start space-x-2 p-2 border-t border-gray-300">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-300">
+                      <img
+                        src={comment.user?.picture}
+                        alt={`${comment.user?.name} profile`}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{comment.user?.name}</p>
+                      <p className="text-sm text-gray-600">{comment?.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200">
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -216,10 +241,10 @@ const FeedPost: React.FC<PostData> = ({
               </div>
               <div className="mt-4 flex justify-end">
                 <button
-                  className="bg-blue-500 text-white px-5 py-2 rounded-full shadow hover:bg-blue-600 transition-all duration-200"
+                  className="bg-blue-500 text-white px-5 py-2 rounded-lg hover:bg-blue-600 transition-all"
                   onClick={handleCommentSubmit}
                 >
-                  Reply
+                  Post
                 </button>
               </div>
             </div>
