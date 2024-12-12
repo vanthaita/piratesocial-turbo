@@ -1,3 +1,4 @@
+version: '3'
 services:
   db:
     image: postgres
@@ -16,6 +17,21 @@ services:
     restart: always
     ports:
       - "6379:6379"
+
+  nestjs-app:
+    build: .
+    container_name: nestjs-app
+    depends_on:
+      - db
+      - redis
+    environment:
+      - REDIS_HOST=redis 
+      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mydatabase?schema=public 
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app 
 
 volumes:
   db_data:
