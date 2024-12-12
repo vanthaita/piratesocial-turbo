@@ -7,11 +7,12 @@ import { RedisService } from '../redis/redis.service';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { MulterModule } from '@nestjs/platform-express';
 import { AwsS3Service } from '../aws/aws.service';
+import { FeedPostCacheConsumer } from './FeedPostCacheConsumer ';
 @Module({
   imports: [PrismaModule, RedisModule,MulterModule.register({
     limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn file 5MB
   }),],
-  controllers: [FeedPostController],
+  controllers: [FeedPostController, FeedPostCacheConsumer],
   providers: [
     FeedPostService,
     RedisService,
@@ -24,7 +25,7 @@ import { AwsS3Service } from '../aws/aws.service';
           options: {
             urls: ['amqp://localhost:5672'],
             queue: 'feed_queue',
-            queueOptions: { durable: false },
+            queueOptions: { durable: true },
           },
         }),
     },

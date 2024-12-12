@@ -18,11 +18,11 @@ const SidebarLeft: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   const menuItems: MenuItem[] = [
-    { label: "Home", icon: <Home /> },
-    { label: "Search", icon: <Search /> },
-    { label: "Notifications", icon: <Bell /> },
+    { label: "Home", icon: <Home /> ,href: '/'},
+    { label: "Search", icon: <Search /> ,href: '/search'},
+    { label: "Notifications", icon: <Bell />,href: '/notifications' },
     { label: "Messages", icon: <Mail />, href: '/messages' },
-    { label: "Profile", icon: <User /> },
+    { label: "Profile", icon: <User /> ,href: `/profile/1`},
   ];
   return (
     <>
@@ -37,10 +37,11 @@ const SidebarLeft: React.FC = () => {
             </h1>
           </div>
           <nav className="flex flex-col w-full px-4 space-y-2">
-            {menuItems.map((item) => (
+          {menuItems.map((item) => (
+            <Link href={item.href as string} key={item.label} 
+              onClick={() => setActiveItem(item.label)}
+            >
               <div
-                key={item.label}
-                onClick={() => setActiveItem(item.label)}
                 className={`flex items-center space-x-4 py-3 px-4 rounded-lg transition-all cursor-pointer ${
                   activeItem === item.label
                     ? "bg-gray-200 border-gray-800 shadow-md"
@@ -58,7 +59,9 @@ const SidebarLeft: React.FC = () => {
                   {item.label}
                 </span>
               </div>
-            ))}
+            </Link>
+          ))}
+
             <NewPostModal />
           </nav>
         </aside>

@@ -15,14 +15,28 @@ export class RedisService {
   getClient() {
     return this.client;
   }
-  async checkConnection(): Promise<boolean> {
+
+  async checkConnection(): Promise<{ connected: boolean; cacheInfo?: string; keys?: string[] }> {
     try {
-      // Gửi lệnh ping tới Redis để kiểm tra kết nối
       const response = await this.client.ping();
-      return response === 'PONG';
+      if (response !== 'PONG') {
+        return { connected: false };
+      }
+      const info = await this.client.info();
+      const cacheInfo = this.extractCacheInfo(info);
+      const keys = await this.client.keys('*');
+      return { connected: true, cacheInfo, keys };
     } catch (error) {
       console.error('Redis connection failed:', error);
-      return false;
+      return { connected: false };
     }
+  }
+
+  private extractCacheInfo(info: string): string {
+    const dbInfo = info.split('\n').find((line) => line.startsWith('db0:'));
+    if (dbInfo) {
+      return dbInfo;
+    }
+    return 'No cache data found';
   }
 }

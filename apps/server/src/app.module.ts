@@ -13,6 +13,10 @@ import { AuthModule } from './modules/auth/auth.module';
 import { FeedPostModule } from './modules/feed/feed.post.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { AwsS3Module } from './modules/aws/aws.module';
+import { FollowModule } from './modules/follow/follow.module';
+import { RedisService } from './modules/redis/redis.service';
+import { SchedulerService } from './modules/scheduler/scheduler.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -25,12 +29,14 @@ import { AwsS3Module } from './modules/aws/aws.module';
     FeedPostModule,
     RedisModule,
     AwsS3Module,
+    FollowModule,
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, RedisService, SchedulerService],
 })
 export class AppModule {}

@@ -124,4 +124,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('error', { message: 'Failed to leave room' });
     }
   }
+  @SubscribeMessage('sendNotification')
+  async handleNotification(
+    @MessageBody() notification: { message: string; userId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { user } = client.data;
+    console.log(`Notification from ${user.id} to user ${notification.userId}:`, notification);
+    this.server.to(`user:${notification.userId}`).emit('receiveNotification', {
+      message: notification.message,
+      sender: user.name,
+    });
+  }
 }

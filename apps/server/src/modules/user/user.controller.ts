@@ -13,7 +13,7 @@ import { CreateUserDto } from '../../dto/userDto/create-user.dto';
 import { UpdateUserDto } from '../../dto/userDto/update-user.dto';
 
 @Controller('users')
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -29,7 +29,7 @@ export class UserController {
 
   @Get(':id')
   async getUser(@Param('id') id: number) {
-    return this.userService.getUser(id);
+    return this.userService.getUser(+id);
   }
   @Get()
   async getAll() {
