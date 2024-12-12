@@ -41,7 +41,6 @@ export interface PostData {
   imagesUrl: string[];
   createdAt: string;
   user: User;
-  likes: any[];
   comments: Comment[];
   commentsCount: number;
   likesCount: number;

@@ -34,6 +34,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.3",
     "@nestjs/platform-socket.io": "^10.4.1",
+    "@nestjs/schedule": "^4.1.2",
     "@nestjs/websockets": "^10.4.1",
     "@prisma/client": "^5.19.1",
     "amqp-connection-manager": "^4.1.14",
@@ -47,7 +48,8 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "type-cacheable": "^4.1.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",

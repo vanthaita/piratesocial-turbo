@@ -9,6 +9,7 @@ import { AwsS3Service } from '../aws/aws.service';
 @Injectable()
 export class FeedPostService {
   private readonly cacheKeyAllPosts = 'feed:allPosts';
+  private readonly cacheKeyDiscoverPosts = 'feed:discover';
   private readonly cacheKeyUserPosts = (userId: number) => `feed:userPosts:${userId}`;
   private readonly cacheKeyPostComments = (postId: number) => `feed:postComments:${postId}`;
   private readonly cacheKeyPostDetails = (postId: number) => `feed:postDetails:${postId}`;
@@ -55,11 +56,66 @@ export class FeedPostService {
   
     return posts;
   }
+  async getDiscoverPosts(skip = 0, take = 10) {
+    const posts = await this.prisma.feedPost.findMany({
+      include: {
+        user: { select: { id: true, name: true, providerId: true, picture: true } },
+        likes: true,
+        comments: { select: { user: { select: { id: true, name: true, picture: true } }, content: true } },
+        retweets: true,
+      },
+    });
   
-
+    const scoredPosts = posts.map((post) => {
+      const recencyScore = Math.max(
+        0,
+        7 - (Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return {
+        ...post,
+        score:
+          (post.likesCount || 0) * 2 +
+          (post.comments?.length || 0) * 3 +
+          (post.retweets?.length || 0) * 1 +
+          recencyScore * 0.5,
+      };
+    });
+  
+    scoredPosts.sort((a, b) => b.score - a.score);
+  
+    return scoredPosts.slice(skip, skip + take);
+  }
+  
+  async getCachedDiscoverPosts(skip = 0, take = 10) {
+    const redisKey = `${this.cacheKeyAllPosts}:${skip}:${take}`;
+    const redisClient = this.redisService.getClient();
+  
+    try {
+      const cachedData = await redisClient.get(redisKey);
+      if (cachedData) {
+        return JSON.parse(cachedData);
+      }
+    } catch (err) {
+      console.error(`Error parsing cached data for key ${redisKey}:`, err);
+    }
+    const posts = await this.getDiscoverPosts(skip, take);
+    try {
+      await redisClient.set(redisKey, JSON.stringify(posts), 'EX', 60);
+    } catch (err) {
+      console.error(`Error caching data for key ${redisKey}:`, err);
+    }
+    return posts;
+  }
+  
+  
+  async checkTest() {
+    console.log('Testing...');
+    await this.redisService.getClient().set("feed:Postest", 23232);
+  }
   async createFeedPost(data: Prisma.FeedPostCreateInput, userId: number, files?: Express.Multer.File[]) {
     const redisClient = this.redisService.getClient();
-    console.log("files: ", files);
+    console.log('Creating feed post...');
+    console.log('Files received:', files);
     const imageUrls = files
       ? await Promise.all(
           files.map(async (file) =>
@@ -67,75 +123,112 @@ export class FeedPostService {
           ),
         )
       : [];
-    console.log("image urls: ", imageUrls)
+    console.log('Image URLs:', imageUrls);
+  
     const newPost = await this.prisma.feedPost.create({
       data: { userId, content: data.content, imagesUrl: imageUrls || [] },
     });
+    console.log('New post created:', newPost);
   
     const allPostKeys = await redisClient.keys(`${this.cacheKeyAllPosts}:*`);
     if (allPostKeys.length > 0) {
+      console.log('Clearing all post keys from cache:', allPostKeys);
       await redisClient.del(allPostKeys);
     }
+    console.log(`Clearing user post cache for userId: ${userId}`);
     await redisClient.del(this.cacheKeyUserPosts(userId));
   
+    console.log('Emitting cache_update event...');
     this.rabbitMQClient.emit('cache_update', {
       type: 'CREATE_POST',
       userId,
       postId: newPost.id,
     });
   
+    console.log('cache_update event emitted successfully.');
     return newPost;
   }
   
 
   async likePost(postId: number, userId: number) {
     const redisClient = this.redisService.getClient();
-
+  
     const existingLike = await this.prisma.feedPostLike.findUnique({
       where: { postId_userId: { postId, userId } },
     });
     if (existingLike) {
       throw new ForbiddenException('Post already liked by this user.');
     }
-
     await this.prisma.feedPostLike.create({ data: { postId, userId } });
     const updatedPost = await this.prisma.feedPost.update({
       where: { id: postId },
       data: { likesCount: { increment: 1 } },
     });
-
+    const postCacheKey = this.cacheKeyPostDetails(postId);
+    const cachedPost = await redisClient.get(postCacheKey);
+    if (cachedPost) {
+      const post = JSON.parse(cachedPost);
+      post.likesCount += 1;
+      post.likes = [...(post.likes || []), { userId }];
+      await redisClient.set(postCacheKey, JSON.stringify(post), 'EX', 120); 
+    }
     await redisClient.del(this.cacheKeyAllPosts);
-
     this.rabbitMQClient.emit('cache_update', {
       type: 'LIKE_POST',
       postId,
       userId,
     });
-
+  
     return updatedPost;
   }
+  
   async getFeedPosts(userId: number, skip = 0, take = 10) {
+    console.log('Fetching feed posts for user:', userId);
+    const cacheKey = `feed:userPosts:${userId}:${skip}:${take}`;
     const redisClient = this.redisService.getClient();
-    const cacheKey = `${this.cacheKeyUserPosts(userId)}:${skip}:${take}`;
-
+  
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
+      console.log('Returning cached feed posts:', JSON.parse(cachedData));
       return JSON.parse(cachedData);
     }
-
-    const posts = await this.prisma.feedPost.findMany({
-      where: { userId },
-      skip,
-      take,
-      include: {
-        user: true,
-        likes: true,
-        comments: { take: 5 },
-      },
+  
+    const followedUsers = await this.prisma.following.findMany({
+      where: { followerId: userId },
+      select: { followeeId: true },
     });
-
+    console.log('Followed users:', followedUsers);
+  
+    const followedUserIds = followedUsers.map(f => f.followeeId);
+    if (followedUserIds.length === 0) {
+      console.warn('No followed users found.');
+      return [];
+    }
+    const posts = await this.prisma.feedPost.findMany({
+      where: { userId: { in: followedUserIds } },
+      skip: skip,
+      take: take,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, name: true, providerId: true, picture: true } },
+        likes: true,
+        comments: {
+          select: {
+            user: {
+              select: { id: true, name: true, providerId: true, picture: true }
+            },
+            createdAt: true,
+            content: true,
+            userId: true,
+            postId: true,
+          }
+        },
+        retweets: true,
+      },
+      distinct: ['id'],  
+    });
+    console.log('Fetched posts:', posts);
     await redisClient.set(cacheKey, JSON.stringify(posts), 'EX', 60);
-
     return posts;
   }
 
@@ -160,22 +253,24 @@ export class FeedPostService {
 
   async retweetPost(postId: number, userId: number) {
     const redisClient = this.redisService.getClient();
-
-    const retweet = await this.prisma.retweet.upsert({
+    const existingRetweet = await this.prisma.retweet.findUnique({
       where: { postId_userId: { postId, userId } },
-      create: { postId, userId },
-      update: {},
     });
-
+    if (existingRetweet) {
+      throw new ForbiddenException('You have already retweeted this post.');
+    }
+    const retweet = await this.prisma.retweet.create({
+      data: { postId, userId },
+    });
+    await redisClient.del(this.cacheKeyPostDetails(postId));
+    await redisClient.del(this.cacheKeyAllPosts);
     this.rabbitMQClient.emit('cache_update', {
       type: 'RETWEET_POST',
       postId,
       userId,
     });
-
     return retweet;
   }
-
   async deleteFeedPost(postId: number, userId: number) {
     const redisClient = this.redisService.getClient();
 

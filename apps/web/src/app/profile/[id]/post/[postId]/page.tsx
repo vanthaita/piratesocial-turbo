@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import { Comment, PostData } from '@/types';
 import { ArrowLeftIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import AddNewFollowButton from './_components/addNewFollow';
 
 interface Post extends PostData {
   isLikedByUser: boolean;
@@ -141,9 +142,7 @@ const TweetViewPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <button className="px-4 py-2.5 rounded-full bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors shadow-md">
-              + Follow
-            </button>
+            <AddNewFollowButton followeeId={post.user?.id}/>
           </div>
           <div className="mt-2 text-gray-800">
             <p className="text-base">{post.content}</p>

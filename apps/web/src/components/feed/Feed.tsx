@@ -6,6 +6,7 @@ import FeedPost from './FeedPost';
 import axiosInstance from '@/helper/axiosIntance';
 import { PostData } from '@/types';
 
+
 const FeedTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('discover');
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -22,17 +23,18 @@ const FeedTabs: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axiosInstance.get('feed-posts/all', {
+      const endpoint =
+        activeTab === 'discover' ? 'feed-posts/all' : 'feed-posts/user';
+      const response = await axiosInstance.get(endpoint, {
         params: { skip: skipRef.current, take: TAKE },
       });
       const data = response.data;
-
+      console.log(data);
       if (data.length === 0) {
         setHasMore(false);
       } else {
         setPosts((prevPosts) => [...prevPosts, ...data]);
         skipRef.current += TAKE;
-        console.log('Updated Skip Value:', skipRef.current);
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -67,7 +69,7 @@ const FeedTabs: React.FC = () => {
       isFirstLoad.current = false;
       return;
     }
-
+    console.log(skipRef.current);
     setPosts([]);
     skipRef.current = 0;
     setHasMore(true); 
@@ -101,7 +103,7 @@ const FeedTabs: React.FC = () => {
 
       <ScrollArea
         id="scroll-area"
-        className="h-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200"
+         className="flex-1 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200"
       >
         <div>
           {posts.map((post, index) => (
@@ -111,7 +113,7 @@ const FeedTabs: React.FC = () => {
           {!hasMore && !loading && (
             <p className="text-center my-4 text-gray-500">No more posts to display.</p>
           )}
-          <div ref={lastPostRef} className="invisible" />
+          <div ref={lastPostRef} className="h-1" />
         </div>
       </ScrollArea>
     </div>

@@ -15,6 +15,7 @@ import { FeedPostService } from './feed.post.service';
 import { AuthGuard as JWTAuthGuard } from '../auth/auth.gaurd';
 import { Request as ExpressRequest } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
+
 @Controller('feed-posts')
 export class FeedPostController {
   constructor(private readonly feedPostService: FeedPostService) {}
@@ -22,18 +23,18 @@ export class FeedPostController {
   @UseGuards(JWTAuthGuard)
   @Post()
   @UseInterceptors(FilesInterceptor('images'))
-  create(@Body() createFeedPostDto: any, @Request() req: ExpressRequest,@UploadedFiles() files: Express.Multer.File[]) {
+  async create(@Body() createFeedPostDto: any, @Request() req: ExpressRequest,@UploadedFiles() files: Express.Multer.File[]) {
     const userId = req.user?.id;
-    return this.feedPostService.createFeedPost(createFeedPostDto, userId, files);
+    return await this.feedPostService.createFeedPost(createFeedPostDto, userId, files);
   }
-
   @Get('all')
-  getAllPosts(@Query('skip') skip = 0, @Query('take') take = 4) {
-    return this.feedPostService.getFeedAllPosts(+skip, +take);
+  async getAllPosts(@Query('skip') skip = 0, @Query('take') take = 10) {
+    const posts = await this.feedPostService.getCachedDiscoverPosts(+skip, +take);
+    return posts;
   }
 
   @UseGuards(JWTAuthGuard)
-  @Get(':userId')
+  @Get('user')
   getPosts(
     @Query('skip') skip = 0,
     @Query('take') take = 10,
@@ -91,5 +92,9 @@ export class FeedPostController {
     @Query('take') take = 10,
   ) {
     return await this.feedPostService.getCommentPost(+postId, +skip, +take);
+  }
+  @Get('test')
+  test() {
+    this.feedPostService.checkTest();
   }
 }

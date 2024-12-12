@@ -42,7 +42,7 @@ const FeedPost: React.FC<PostData> = ({
 
   return (
     <>
-      <div className="border border-gray-300 p-4 bg-white shadow-lg transition-all duration-300 hover:shadow-xl"
+      <div className=" border-b border-gray-300 p-4 bg-white shadow-lg transition-all duration-300 hover:shadow-xl"
         
       >
         <div className="flex items-start space-x-3"
