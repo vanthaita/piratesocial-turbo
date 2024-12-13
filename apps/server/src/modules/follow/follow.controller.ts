@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Param, ParseIntPipe, Get, UseGuards,Request } from '@nestjs/common';
+import { Controller, Post, Delete, Param, ParseIntPipe, Get, UseGuards,Request, Query } from '@nestjs/common';
 import { FollowService } from './follow.service';
 import { AuthGuard as JWTAuthGuard } from '../auth/auth.gaurd';
 import { Request as ExpressRequest } from 'express';
@@ -15,6 +15,12 @@ export class FollowController {
     console.log('follow user: ' + followeeId);
     const followerId = req.user?.id;
     return this.followService.followUser(followerId, followeeId);
+  }
+  @Get('/followers')
+  async getFollowers(
+    @Query('userId', ParseIntPipe) userId: number
+  ) {
+    return this.followService.getFollowers(userId);
   }
 
   @UseGuards(JWTAuthGuard)

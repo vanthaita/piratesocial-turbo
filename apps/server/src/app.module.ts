@@ -1,7 +1,5 @@
 /* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
@@ -17,6 +15,7 @@ import { FollowModule } from './modules/follow/follow.module';
 import { RedisService } from './modules/redis/redis.service';
 import { SchedulerService } from './modules/scheduler/scheduler.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -30,13 +29,14 @@ import { ScheduleModule } from '@nestjs/schedule';
     RedisModule,
     AwsS3Module,
     FollowModule,
+    NotificationsModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService, PrismaService, RedisService, SchedulerService],
+  controllers: [],
+  providers: [PrismaService, RedisService, SchedulerService],
 })
 export class AppModule {}

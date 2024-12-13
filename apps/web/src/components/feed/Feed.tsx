@@ -25,9 +25,12 @@ const FeedTabs: React.FC = () => {
     try {
       const endpoint =
         activeTab === 'discover' ? 'feed-posts/all' : 'feed-posts/user';
-      const response = await axiosInstance.get(endpoint, {
-        params: { skip: skipRef.current, take: TAKE },
-      });
+      const params = {
+        skip: skipRef.current,
+        take: TAKE,
+        ...(activeTab === 'discover' && { currentUser: 1 }),
+      };
+      const response = await axiosInstance.get(endpoint, { params });
       const data = response.data;
       console.log(data);
       if (data.length === 0) {

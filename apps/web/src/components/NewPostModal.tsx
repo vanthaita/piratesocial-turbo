@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { X, Image as ImageIcon, Video, Smile, Paperclip } from "lucide-react";
 import axiosInstance from "@/helper/axiosIntance";
+import { useRouter } from "next/navigation";
 
 const NewPostModal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [content, setContent] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const maxCharacters = 150;
-
+  const maxCharacters = 250;
+  const router = useRouter();
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
@@ -42,8 +43,8 @@ const NewPostModal = () => {
       console.log("New post created successfully:", responseData);
       setContent("");
       setImages([]);
+      router.refresh();
       closeModal();
-      window.location.reload();
     } catch (e) {
       console.error("Error creating new post:", e);
       alert(`${e}`);

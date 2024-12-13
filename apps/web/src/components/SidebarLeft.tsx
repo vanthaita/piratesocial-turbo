@@ -11,16 +11,18 @@ interface MenuItem {
   label: string;
   icon: React.ReactNode;
   href?: string;
+  notificationCount?: number; 
 }
 
 const SidebarLeft: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>("Home");
   const { isAuthenticated } = useAuth();
+  const [notificationsCount, setNotificationsCount] = useState<number>(3);
 
   const menuItems: MenuItem[] = [
     { label: "Home", icon: <Home /> ,href: '/'},
     { label: "Search", icon: <Search /> ,href: '/search'},
-    { label: "Notifications", icon: <Bell />,href: '/notifications' },
+    { label: "Notifications", icon: <Bell />,href: '/notifications' ,notificationCount: notificationsCount},
     { label: "Messages", icon: <Mail />, href: '/messages' },
     { label: "Profile", icon: <User /> ,href: `/profile/1`},
   ];
@@ -50,7 +52,14 @@ const SidebarLeft: React.FC = () => {
                 role="button"
                 tabIndex={0}
               >
-                <div className="text-gray-800">{item.icon}</div>
+                 <div className="relative">
+                  <div className="text-gray-800">{item.icon}</div>
+                  {item.notificationCount && item.notificationCount > 0 && (
+                    <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                      {item.notificationCount}
+                    </span>
+                  )}
+                </div>
                 <span
                   className={`text-lg font-medium ${
                     activeItem === item.label ? "text-gray-800" : "text-gray-600"
@@ -58,6 +67,7 @@ const SidebarLeft: React.FC = () => {
                 >
                   {item.label}
                 </span>
+               
               </div>
             </Link>
           ))}
