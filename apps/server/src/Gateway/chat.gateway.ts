@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ChatService } from 'src/modules/chat/chat.service';
 import { RoomService } from 'src/modules/room/room.service';
+import { RedisService } from 'src/modules/redis/redis.service';
 
 @WebSocketGateway({
   cors: {
@@ -20,11 +21,12 @@ import { RoomService } from 'src/modules/room/room.service';
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
-
+  private redisSubscriber;
   constructor(
     private readonly jwtService: JwtService,
     private readonly chatService: ChatService,
     private readonly roomService: RoomService,
+    private readonly redisService: RedisService
   ) {}
 
   async handleConnection(client: Socket) {
@@ -124,16 +126,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('error', { message: 'Failed to leave room' });
     }
   }
-  @SubscribeMessage('sendNotification')
-  async handleNotification(
-    @MessageBody() notification: { message: string; userId: number },
-    @ConnectedSocket() client: Socket,
-  ) {
+  
+  @SubscribeMessage('subscribeNotifications')
+  async subscribeToNotifications(@ConnectedSocket() client: Socket) {
     const { user } = client.data;
-    console.log(`Notification from ${user.id} to user ${notification.userId}:`, notification);
-    this.server.to(`user:${notification.userId}`).emit('receiveNotification', {
-      message: notification.message,
-      sender: user.name,
-    });
+    if (!user || !user.id) {
+      throw new WsException('Invalid user data');
+    }
+    try {
+      const redisClient = this.redisService.getClient();
+      this.redisSubscriber = this.redisSubscriber || redisClient.duplicate();
+      if (!this.redisSubscriber.status || this.redisSubscriber.status === 'end') {
+        await this.redisSubscriber.connect();
+      }
+      const channel = `notifications:user:${user.id}`;
+      await this.redisSubscriber.subscribe(channel);
+
+      this.redisSubscriber.on('message', (subscribedChannel: string, message: string) => {
+        if (subscribedChannel === channel) {
+          this.server.to(client.id).emit('receiveNotification', JSON.parse(message));
+        }
+      });
+      console.log(`Subscribed client ${client.id} to ${channel}`);
+    } catch (error) {
+      console.error('Error subscribing to notifications:', error);
+      throw new WsException('Failed to subscribe to notifications');
+    }
   }
 }

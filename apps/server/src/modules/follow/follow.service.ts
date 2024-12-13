@@ -1,16 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { RedisService } from '../redis/redis.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class FollowService {
   private readonly cacheKeyUserFollowers = 'user:followers';
   private readonly cacheKeyUserFollowing = 'user:following';
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
   ) {}
+
 
   async followUser(followerId: number, followeeId: number): Promise<void> {
     // Kiểm tra nếu người dùng đã theo dõi
@@ -33,6 +34,7 @@ export class FollowService {
     // Cập nhật cache
     await redisClient.del(`${this.cacheKeyUserFollowers}:${followeeId}`);
     await redisClient.del(`${this.cacheKeyUserFollowing}:${followerId}`);
+    // await this.notificationsService.notifyFollowers(followerId, 0, "Follow", "Follow");
   }
 
   async unfollowUser(followerId: number, followeeId: number): Promise<void> {
@@ -74,7 +76,6 @@ export class FollowService {
       'EX',
       3600,
     );
-
     return followerIds;
   }
   async checkFollowStatus(followerId: number, followeeId: number) {

@@ -28,8 +28,8 @@ export class FeedPostController {
     return await this.feedPostService.createFeedPost(createFeedPostDto, userId, files);
   }
   @Get('all')
-  async getAllPosts(@Query('skip') skip = 0, @Query('take') take = 10) {
-    const posts = await this.feedPostService.getCachedDiscoverPosts(+skip, +take);
+  async getAllPosts(@Query('skip') skip = 0, @Query('take') take = 10, @Query('currentUser') currentUser?: number) {
+    const posts = await this.feedPostService.getCachedDiscoverPosts(+skip, +take, +currentUser);
     return posts;
   }
 
@@ -92,9 +92,5 @@ export class FeedPostController {
     @Query('take') take = 10,
   ) {
     return await this.feedPostService.getCommentPost(+postId, +skip, +take);
-  }
-  @Get('test')
-  test() {
-    this.feedPostService.checkTest();
   }
 }

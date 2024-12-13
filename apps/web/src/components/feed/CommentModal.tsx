@@ -3,6 +3,7 @@
 import axiosInstance from "@/helper/axiosIntance";
 import { ImageIcon, Smile, Video, X } from "lucide-react";
 import { useState } from "react";
+import {useRouter} from "next/navigation"
 interface User {
   id: number;
   name: string;
@@ -35,12 +36,13 @@ const CommentModal: React.FC<CommentModalProps> = ({
     setIsModalOpen,
   }) => {
     const [comment, setComment] = useState("");
+    const router = useRouter();
     const handleCommentSubmit = async () => {
       try {
         if (comment.trim()) {
           await axiosInstance.post(`/feed-posts/${postId}/comment`, { content: comment });
           setComment("");
-          alert("Comment added!");
+          router.refresh();
           setIsModalOpen(false);
         } else {
           alert("Comment cannot be empty.");

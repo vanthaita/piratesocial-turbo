@@ -5,6 +5,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { RedisService } from '../redis/redis.service';
 import { console } from 'inspector';
 import { AwsS3Service } from '../aws/aws.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class FeedPostService {
@@ -17,6 +18,7 @@ export class FeedPostService {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
     private readonly awsS3Service: AwsS3Service,
+    private readonly notificationService: NotificationsService,
     @Inject('RABBITMQ_CLIENT') private readonly rabbitMQClient: ClientProxy,
   ) {}
   async getFeedAllPosts(skip = 0, take = 10) {
@@ -56,28 +58,42 @@ export class FeedPostService {
   
     return posts;
   }
-  async getDiscoverPosts(skip = 0, take = 10) {
+  async getDiscoverPosts(skip = 0, take = 10, currentUserId?: number) {
     const posts = await this.prisma.feedPost.findMany({
       include: {
         user: { select: { id: true, name: true, providerId: true, picture: true } },
         likes: true,
-        comments: { select: { user: { select: { id: true, name: true, picture: true } }, content: true } },
+        comments: {
+          select: {
+            user: { select: { id: true, name: true, picture: true } },
+            content: true,
+          },
+        },
         retweets: true,
       },
     });
   
+    const now = Date.now();
+  
     const scoredPosts = posts.map((post) => {
       const recencyScore = Math.max(
         0,
-        7 - (Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+        7 - (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
       );
+      const isMyPost = currentUserId ? post.user.id === currentUserId : false;
+      const createdWithin5Minutes =
+        now - new Date(post.createdAt).getTime() <= 5 * 60 * 1000;
+  
+      const priorityScore = isMyPost && createdWithin5Minutes ? 10 : 0;
+  
       return {
         ...post,
         score:
           (post.likesCount || 0) * 2 +
           (post.comments?.length || 0) * 3 +
           (post.retweets?.length || 0) * 1 +
-          recencyScore * 0.5,
+          recencyScore * 0.5 +
+          priorityScore,
       };
     });
   
@@ -86,7 +102,8 @@ export class FeedPostService {
     return scoredPosts.slice(skip, skip + take);
   }
   
-  async getCachedDiscoverPosts(skip = 0, take = 10) {
+  
+  async getCachedDiscoverPosts(skip = 0, take = 10, currentUser?: number) {
     const redisKey = `${this.cacheKeyAllPosts}:${skip}:${take}`;
     const redisClient = this.redisService.getClient();
   
@@ -98,7 +115,7 @@ export class FeedPostService {
     } catch (err) {
       console.error(`Error parsing cached data for key ${redisKey}:`, err);
     }
-    const posts = await this.getDiscoverPosts(skip, take);
+    const posts = await this.getDiscoverPosts(skip, take,currentUser);
     try {
       await redisClient.set(redisKey, JSON.stringify(posts), 'EX', 60);
     } catch (err) {
@@ -108,10 +125,6 @@ export class FeedPostService {
   }
   
   
-  async checkTest() {
-    console.log('Testing...');
-    await this.redisService.getClient().set("feed:Postest", 23232);
-  }
   async createFeedPost(data: Prisma.FeedPostCreateInput, userId: number, files?: Express.Multer.File[]) {
     const redisClient = this.redisService.getClient();
     console.log('Creating feed post...');
@@ -137,15 +150,14 @@ export class FeedPostService {
     }
     console.log(`Clearing user post cache for userId: ${userId}`);
     await redisClient.del(this.cacheKeyUserPosts(userId));
-  
-    console.log('Emitting cache_update event...');
-    this.rabbitMQClient.emit('cache_update', {
-      type: 'CREATE_POST',
-      userId,
-      postId: newPost.id,
-    });
-  
-    console.log('cache_update event emitted successfully.');
+    // console.log('Emitting cache_update event...');
+    // this.rabbitMQClient.emit('cache_update', {
+    //   type: 'CREATE_POST',
+    //   userId,
+    //   postId: newPost.id,
+    // });
+    await this.notificationService.notifyFollowers(userId, newPost.id, newPost.content);
+    // console.log('cache_update event emitted successfully.');
     return newPost;
   }
   
@@ -173,12 +185,12 @@ export class FeedPostService {
       await redisClient.set(postCacheKey, JSON.stringify(post), 'EX', 120); 
     }
     await redisClient.del(this.cacheKeyAllPosts);
-    this.rabbitMQClient.emit('cache_update', {
-      type: 'LIKE_POST',
-      postId,
-      userId,
-    });
-  
+    // this.rabbitMQClient.emit('cache_update', {
+    //   type: 'LIKE_POST',
+    //   postId,
+    //   userId,
+    // });
+    await this.notificationService.likePost(userId, updatedPost.id);
     return updatedPost;
   }
   
@@ -247,7 +259,7 @@ export class FeedPostService {
       userId,
       commentId: newComment.id,
     });
-
+    await this.notificationService.commentPost(userId, newComment.postId, newComment.content);
     return newComment;
   }
 
@@ -269,6 +281,7 @@ export class FeedPostService {
       postId,
       userId,
     });
+    await this.notificationService.retweetPost(userId, retweet.postId);
     return retweet;
   }
   async deleteFeedPost(postId: number, userId: number) {

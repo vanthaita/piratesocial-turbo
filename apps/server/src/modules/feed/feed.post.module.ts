@@ -8,8 +8,9 @@ import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { MulterModule } from '@nestjs/platform-express';
 import { AwsS3Service } from '../aws/aws.service';
 import { FeedPostCacheConsumer } from './FeedPostCacheConsumer ';
+import { NotificationsModule } from '../notifications/notifications.module';
 @Module({
-  imports: [PrismaModule, RedisModule,MulterModule.register({
+  imports: [NotificationsModule,PrismaModule, RedisModule,MulterModule.register({
     limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn file 5MB
   }),],
   controllers: [FeedPostController, FeedPostCacheConsumer],
