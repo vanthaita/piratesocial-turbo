@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { ChatService } from './chat.service';
 
 @Controller('chat')
@@ -15,7 +15,8 @@ export class ChatController {
   }
 
   @Get(':roomId')
-  async getMessagesByRoom(@Query('roomId') roomId: number) {
-    return this.chatService.getMessagesByRoom(roomId);
+  async getMessagesByRoom(@Param('roomId') roomId: number) {
+    console.log("RooommmmmmId is ;", roomId);
+    return this.chatService.getMessagesByRoom(+roomId);
   }
 }

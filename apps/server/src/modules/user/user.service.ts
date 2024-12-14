@@ -91,7 +91,23 @@ export class UserService {
   async updateUser(id: number, data: UpdateUserDto) {
     return this.prisma.user.update({ where: { id }, data });
   }
-
+  async searchUsers(query: { name?: string; email?: string;}) {
+    const { name, email } = query;
+    return this.prisma.user.findMany({
+      where: {
+        ...(name && { OR: [{ givenName: { contains: name } }, { familyName: { contains: name } }] }),
+        ...(email && { email: { contains: email } }),
+        // ...(status && { status }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        picture: true,
+        createdAt: true,
+      },
+    });
+  }
   async findOneBy(email: string) {
     return this.prisma.user.findUnique({
         where: { email },

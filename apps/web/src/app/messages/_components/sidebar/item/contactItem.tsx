@@ -3,22 +3,35 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useToggle } from '@/context/control'; 
 
-interface ContactItemProps {
-  contact: {
-    name: string;
-    status: string;
-    time: string;
-    unread: number;
-    imgSrc: string;
-  };
-  index: number;
+interface Room {
+  id: number;
+  name: string;
+  type: "ONE_TO_ONE" | "GROUP"; // Adjust "GROUP" if there are other possible types
+  createdAt: string; // ISO 8601 date string
 }
 
-const ContactItem: React.FC<ContactItemProps> = ({ contact, index }) => {
+interface ChatData {
+  id: number;
+  roomId: number;
+  userId: number;
+  name: string;
+  status: "active" | "inactive" | "offline"; 
+  time: string; 
+  lastMessage: string;
+  unread: number;
+  imgSrc: string;
+  room: Room;
+}
+
+interface ContactItemProps {
+  contact: ChatData; 
+}
+
+const ContactItem: React.FC<ContactItemProps> = ({ contact }) => {
   const { toggleChildren } = useToggle();
   
   return (
-    <Link href={`/messages/${index}`} key={index} onClick={toggleChildren}>
+    <Link href={`/messages/${contact.roomId}`} key={contact.id} onClick={toggleChildren}>
       <li className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
         <div className="relative">
           <Image
@@ -41,7 +54,7 @@ const ContactItem: React.FC<ContactItemProps> = ({ contact, index }) => {
             <h4 className="font-semibold">{contact.name}</h4>
             <span className="text-xs text-gray-500">{contact.time}</span>
           </div>
-          <p className="text-sm text-gray-600">{contact.status}</p>
+          <p className="text-sm text-gray-600">{contact.lastMessage}</p>
         </div>
       </li>
     </Link>

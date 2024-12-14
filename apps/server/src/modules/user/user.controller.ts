@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from '../auth/auth.gaurd';
@@ -21,7 +22,14 @@ export class UserController {
   async createUser(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto);
   }
-
+  @Get('search')
+  async searchUsers(
+    @Query('name') name?: string,
+    @Query('email') email?: string,
+    // @Query('status') status?: UserStatus,
+  ) {
+    return this.userService.searchUsers({ name, email });
+  }
   @Post('bulk')
   createManyUsers(@Body() createUserDtos: CreateUserDto[]) {
     return this.userService.createManyUsers(createUserDtos);

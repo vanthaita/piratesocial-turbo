@@ -11,7 +11,10 @@ import { BsFiletypeSvg } from "react-icons/bs";
 import { FaRegFilePdf } from "react-icons/fa6";
 import { CiFileOn } from "react-icons/ci";
 import { EllipsisVertical } from 'lucide-react';
-import { Message, UserProfile } from '@/types';
+import { Message, Profile, UserProfile } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { usePathname } from 'next/navigation';
+import axiosInstance from '@/helper/axiosIntance';
 const MessagePage = () => {
   const { toggleChildren } = useToggle();  
   const [messages, setMessages] = useState<Array<Message>>([]);
@@ -24,22 +27,16 @@ const MessagePage = () => {
   const [showFileInMessage, setShowFileInMessage] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const socketRef = useRef<Socket | null>(null); 
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [roomId, setRoomId] = useState<number>(1);
-
+  const roomInPathName = usePathname();
+  const roomId = roomInPathName.split('/')[2];
+  const {profile} = useAuth();
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/chat/${roomId}`, {
-          method: 'GET',
-          credentials: 'include', 
-        });
-        if (response.ok) {
-          const data = await response.json();
+        const response = await axiosInstance.get(`/chat/${roomId}`)
+          const data = await response.data;
+          console.log("Data: ",data);
           setMessages(data); 
-        } else {
-          console.error('Failed to fetch messages:', response.statusText);
-        }
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
@@ -48,54 +45,59 @@ const MessagePage = () => {
   }, [roomId]);
   
   useEffect(() => {
-    const connectToSocket = (userProfile: UserProfile) => {
-      if (userProfile && !socketRef.current) {
-        const newSocket = io('http://localhost:3001', {
-          auth: {
-            profile: userProfile,
-          },
-        });
-        socketRef.current = newSocket;
-        newSocket.on('connect', () => {
-          console.log('Connected to WebSocket server');
-          newSocket.emit('joinRoom', {roomId: 1});
-        });
-        newSocket.on('receiveMessage', (message: Message) => {
-          console.log('Received: ', message);
-          if (audioRef.current) {
-            audioRef.current.play().catch(error => console.error('Error playing audio:', error));
-          }
-          setMessages((prevMessages) => [...prevMessages, message]);
-        });
-        newSocket.on('joinedRoom', (roomId: string) => {
-          console.log(`Joined room ${roomId}`);
-        });
-        newSocket.on('leftRoom', (roomId: string) => {
-          console.log(`Left room ${roomId}`);
-        });
-      }
-    };
+    const connectToSocket = (userProfile: Profile) => {
+      if (userProfile) {
+        if (!socketRef.current || socketRef.current.disconnected) {
+          const newSocket = io('http://localhost:3001', {
+            auth: {
+              profile: userProfile,
+            },
+            reconnection: true,
+            reconnectionAttempts: 5, 
+          });
   
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch('http://localhost:3001/auth/profile', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data);
-          connectToSocket(data); 
-        } else {
-          console.error('Failed to fetch profile:', response.statusText);
+          socketRef.current = newSocket;
+  
+          newSocket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+            newSocket.emit('joinRoom', { roomId });
+          });
+  
+          newSocket.on('disconnect', (reason) => {
+            console.log('Socket disconnected:', reason);
+          });
+  
+          newSocket.on('receiveMessage', (message: Message) => {
+            console.log('Received: ', message);
+            if (audioRef.current) {
+              audioRef.current.play().catch((error) => console.error('Error playing audio:', error));
+            }
+            setMessages((prevMessages) => [...prevMessages, message]);
+          });
+  
+          newSocket.on('joinedRoom', (roomId: string) => {
+            console.log(`Joined room ${roomId}`);
+          });
+  
+          newSocket.on('leftRoom', (roomId: string) => {
+            console.log(`Left room ${roomId}`);
+          });
         }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
       }
     };
   
-    fetchProfile();
-  }, [roomId]); 
+    if (profile) {
+      connectToSocket(profile as Profile);
+    }
+  
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [profile, roomId]);
+  
   
   
   useEffect(() => {

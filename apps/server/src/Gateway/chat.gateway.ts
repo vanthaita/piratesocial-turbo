@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ChatService } from 'src/modules/chat/chat.service';
 import { RoomService } from 'src/modules/room/room.service';
 import { RedisService } from 'src/modules/redis/redis.service';
+import { RoomUserService } from 'src/modules/room-user/room-user.service';
 
 @WebSocketGateway({
   cors: {
@@ -26,7 +27,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly jwtService: JwtService,
     private readonly chatService: ChatService,
     private readonly roomService: RoomService,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
+    private readonly roomUserService: RoomUserService
   ) {}
 
   async handleConnection(client: Socket) {
@@ -57,12 +59,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const { user } = client.data;
     console.log(`Message from ${client.id} (user: ${user.id}):`, message);
-
+    const socketId = client.id;
     try {
       const sentMessage = await this.chatService.sendMessage(
         parseInt(message.roomId, 10),
         user.id,
         message.message,
+        
       );
 
       this.server.to(message.roomId).emit('receiveMessage', {
@@ -76,7 +79,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           picture: sentMessage.sender.picture,
         },
       });
-
+      this.roomUserService.updateLastMessageinRoom(parseInt(message.roomId,10), message.message)
       console.log(`Sent to room ${message.roomId}:`, {
         content: message.message,
         sender: user.email,
@@ -94,9 +97,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const { user } = client.data;
     console.log(`Client ${client.id} (user: ${user.id}) joining room ${roomId.roomId}`);
-
     try {
-      await this.roomService.addUserToRoom(parseInt(roomId.roomId, 10), user.id);
+      // const {name, imgSrc} = await this.roomService.getRoomDetails(parseInt(roomId.roomId, 10), user.id);
+      // const details = {
+      //   name,
+      //   status: 'active',
+      //   time: 'now',
+      //   lastMessage: '',
+      //   unread: 0,
+      //   imgSrc,
+      // }
+      // await this.roomService.addUserToRoom(parseInt(roomId.roomId, 10), user.id, details);
       client.join(roomId.roomId);
       client.emit('joinedRoom', { roomId: roomId.roomId });
 

@@ -1,8 +1,20 @@
+export interface Profile extends UserProfile {
+  id: string,
+  name: string,
+  email: string,
+  givenName: string,
+  familyName: string,
+  picture: string,
+  lastActiveAt: Date,
+  providerId: string,
+  status: string,
+  createdAt: Date,
+}
 
 export interface UserProfile {
-    picture: string;
-    email: string;
-  }
+  picture: string;
+  email: string;
+}
   
 export interface Message {
   id: number;
