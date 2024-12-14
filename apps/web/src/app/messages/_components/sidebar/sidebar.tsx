@@ -1,66 +1,85 @@
 'use client'
-import { Search } from 'lucide-react';
-import React, { useState } from 'react';
+import { Contrast, Search } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import ContactItem from './item/contactItem';
 import GroupItem from './item/groupItem';
 import ChannelItem from './item/channelItem';
 import WorkItem from './item/workItem';
 import ReelStory from './option/ReelStory';
 import ProfileSidebar from './profileSidebar';
+import axiosInstance from '@/helper/axiosIntance';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
-const contacts = [
-  { name: 'Lauri Edmon', status: 'Writing...', time: '12.52', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
-  { name: 'Julian Gruber', status: 'Send audio...', time: '20.25', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
-  { name: 'Karlien Nihen', status: 'Writing...', time: '2.28', unread: 0, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
-  { name: 'Meg Rigden', status: 'Washington D.C.', time: '12.52', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
-  { name: 'Mark Green', status: 'I do not remember anything', time: '05.41', unread: 0, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
-];
+// const contacts = [
+//   { name: 'Lauri Edmon', status: 'Writing...', time: '12.52', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
+//   { name: 'Julian Gruber', status: 'Send audio...', time: '20.25', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
+//   { name: 'Karlien Nihen', status: 'Writing...', time: '2.28', unread: 0, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
+//   { name: 'Meg Rigden', status: 'Washington D.C.', time: '12.52', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
+//   { name: 'Mark Green', status: 'I do not remember anything', time: '05.41', unread: 0, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
+// ];
 
-const groups = [
-  { name: 'Project Team', members: 5, lastMessage: 'New design updates...', time: '14.22', imgSrcs: ['/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png'], category: 'Groups' ,unread: 3},
-  { name: 'Project Team 2', members: 5, lastMessage: 'New design updates...', time: '14.22', imgSrcs: ['/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png'], category: 'Groups' ,unread: 3},
-];
+// const groups = [
+//   { name: 'Project Team', members: 5, lastMessage: 'New design updates...', time: '14.22', imgSrcs: ['/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png'], category: 'Groups' ,unread: 3},
+//   { name: 'Project Team 2', members: 5, lastMessage: 'New design updates...', time: '14.22', imgSrcs: ['/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png', '/icons/android-chrome-192x192.png'], category: 'Groups' ,unread: 3},
+// ];
 
-const channels = [
-  { name: 'General Updates', status: 'Latest company news...', time: '09:30', unread: 5, imgSrc: '/icons/android-chrome-192x192.png', category: 'Channels' },
-  { name: 'Product Launch', status: 'Meeting at 4 PM...', time: '15:00', unread: 0, imgSrc: '/icons/android-chrome-192x192.png', category: 'Channels' },
-];
+// const channels = [
+//   { name: 'General Updates', status: 'Latest company news...', time: '09:30', unread: 5, imgSrc: '/icons/android-chrome-192x192.png', category: 'Channels' },
+//   { name: 'Product Launch', status: 'Meeting at 4 PM...', time: '15:00', unread: 0, imgSrc: '/icons/android-chrome-192x192.png', category: 'Channels' },
+// ];
 
-const work = [
-  { name: 'Client Meeting', status: 'Discuss project requirements...', time: '11:00', unread: 1, imgSrc: '/icons/android-chrome-192x192.png', category: 'Work' },
-  { name: 'Code Review', status: 'Review pull requests...', time: '17:00', unread: 3, imgSrc: '/icons/android-chrome-192x192.png', category: 'Work' },
-];
-const reels = [
-  { name: 'Lauri Edmon', videoSrc: '/videos/reel1.mp4', imgSrc: '/icons/android-chrome-192x192.png' },
-  { name: 'Julian Gruber', videoSrc: '/videos/reel1.mp4', imgSrc: '/icons/android-chrome-192x192.png' },
-  { name: 'Karlien Nihen', videoSrc: '/videos/reel1.mp4', imgSrc: '/icons/android-chrome-192x192.png' },
-];
+// const work = [
+//   { name: 'Client Meeting', status: 'Discuss project requirements...', time: '11:00', unread: 1, imgSrc: '/icons/android-chrome-192x192.png', category: 'Work' },
+//   { name: 'Code Review', status: 'Review pull requests...', time: '17:00', unread: 3, imgSrc: '/icons/android-chrome-192x192.png', category: 'Work' },
+// ];
+// const reels = [
+//   { name: 'Lauri Edmon', videoSrc: '/videos/reel1.mp4', imgSrc: '/icons/android-chrome-192x192.png' },
+//   { name: 'Julian Gruber', videoSrc: '/videos/reel1.mp4', imgSrc: '/icons/android-chrome-192x192.png' },
+//   { name: 'Karlien Nihen', videoSrc: '/videos/reel1.mp4', imgSrc: '/icons/android-chrome-192x192.png' },
+// ];
 const Sidebar = ({className} : {className: any}) => {
   const [activeItem, setActiveItem] = useState('All');
   const [showProfile, setShowProfile] = useState(false);
-  const [showReel, setShowReel] = useState(false);
-  const [currentReelIndex, setCurrentReelIndex] = useState(0);
+  const [roomIdList, setRoomIdList] = useState([]);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<
+  { id: number; name: string; email: string; picture: string; createdAt: Date }[]
+  >([]);
+  const router = useRouter();
+  const {profile} = useAuth()
   const handleClick = (item: string) => {
     setActiveItem(item);
   };
+  const handleCreateRoomChat = async (anotherId: number) => {
+    const response = await axiosInstance.post(`room/create-one-to-one/${anotherId}`)
+    router.push(`/messages/${response.data.id}`);
+  }
+  const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchValue = e.target.value;
+    setQuery(searchValue);
 
-  const handleClickReel = (index: number) => {
-    setCurrentReelIndex(index);
-    setShowReel(true);
+    if (searchValue.trim() === '') {
+      setResults([]);
+      return;
+    }
+    try {
+      const response = await axiosInstance.get('/users/search', {
+        params: { name: searchValue },
+      });
+      setResults(response.data);
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+    }
   };
-
-  const nextReel = () => {
-    setCurrentReelIndex((prev) => (prev + 1) % reels.length);
-  };
-
-  const prevReel = () => {
-    setCurrentReelIndex((prev) => (prev - 1 + reels.length) % reels.length);
-  };
-  const filteredContacts = activeItem === 'All' ? contacts : contacts.filter(contact => contact.category === activeItem);
-  const filteredGroups = activeItem === 'All' ? groups : groups.filter(group => group.category === activeItem);
-  const filteredChannels = activeItem === 'All' ? channels : channels.filter(channel => channel.category === activeItem);
-  const filteredWork = activeItem === 'All' ? work : work.filter(w => w.category === activeItem);
-
+  useEffect(() => {
+    const getRoomUser = async () => {
+      const responseRoomData = await axiosInstance.get(`room-user/users/rooms`);
+      const roomDataList = responseRoomData.data;
+      setRoomIdList(roomDataList);
+    }
+    getRoomUser();
+  }, [profile?.id])
   return (
     <>
     <aside className={`min-w-1/4 w-full md:w-1/4 h-screen bg-white shadow-md overflow-y-auto sidebar ${className}`}>
@@ -89,9 +108,23 @@ const Sidebar = ({className} : {className: any}) => {
           <input
             type="text"
             placeholder="Search..."
+            value={query}
+            onChange={handleSearch}
             className="flex-grow bg-transparent outline-none px-2"
           />
         </div>
+        {results.length > 0 && (
+        <div className="bg-white rounded-md shadow-md mt-2 max-h-[200px] overflow-y-auto">
+          {results.map((user) => (
+            <div key={user.id} className="p-2 border-b last:border-b-0 cursor-pointer"
+              onClick={() => {handleCreateRoomChat(user.id)}}
+            >
+              <p className="font-medium">{user.name}</p>
+              <p className="text-sm text-gray-500">{user.email}</p>
+            </div>
+          ))}
+        </div>
+      )}
       </div>
       {/* <div className="w-full overflow-x-auto flex space-x-4 px-4 py-2">
           {reels.map((reel, index) => (
@@ -121,10 +154,11 @@ const Sidebar = ({className} : {className: any}) => {
         ))}
       </div>
       <ul className="space-y-4 p-2">
-        {filteredContacts.map((contact, index) => (
-            <ContactItem contact={contact} index={index} key={index}/>
+        {roomIdList && roomIdList.map((contact, index) => (
+             <ContactItem contact={contact} key={index}/>
         ))}
-        {filteredGroups.map((group, index) => (
+        {/* {JSON.stringify(roomIdList)} */}
+        {/* {filteredGroups.map((group, index) => (
             <GroupItem group={group} index={index} key={index}/>
         ))}
         {filteredChannels.map((channel, index) => (
@@ -132,7 +166,7 @@ const Sidebar = ({className} : {className: any}) => {
         ))}
         {filteredWork.map((w, index) => (
             <WorkItem work={w} index={index} key={index}/>
-        ))}
+        ))} */}
       </ul>
     </aside>
     {/* {showReel && (

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "RoomUser" ALTER COLUMN "imgSrc" SET DATA TYPE TEXT;

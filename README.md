@@ -212,7 +212,7 @@ PirateSocial is licensed under the [MIT License](LICENSE).
 ![Chat Screen](https://github.com/user-attachments/assets/74edf9e1-5116-4085-958b-613d30ac1b16)
 ![Feed Post](https://github.com/user-attachments/assets/fe964a5e-aca7-47cf-a2b4-6a0d79f22f84)
 ![Notifications](https://github.com/user-attachments/assets/8256a480-354a-4a40-8221-794dc37ef4de)
-![Profile Page](https://github.com/user-attachments/assets/ac0c5b7f-6529-49a7-a9ef-120372ba5f83)
+
 
 ---
 

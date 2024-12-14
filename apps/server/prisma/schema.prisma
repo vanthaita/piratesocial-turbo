@@ -54,7 +54,7 @@ model Chat {
 model Room {
   id             Int              @id @default(autoincrement())
   name           String
-   type      RoomType   @default(ONE_TO_ONE) 
+  type      RoomType   @default(ONE_TO_ONE) 
   createdAt      DateTime         @default(now())
   chats          Chat[]
   users          RoomUser[]
@@ -70,9 +70,15 @@ model RoomUser {
   id      Int    @id @default(autoincrement())
   roomId  Int
   userId  Int
+  name    String
+  status  String
+  time    String
+  lastMessage  String 
+  unread  Int @default(0)
+  imgSrc  String
   room    Room   @relation(fields: [roomId], references: [id])
   user    User   @relation(fields: [userId], references: [id])
-  @@unique([roomId, userId])  // Ensuring each user is uniquely associated with a room
+  @@unique([roomId, userId])
 }
 
 model Attachment {

@@ -5,7 +5,6 @@ import { AppDispatch, RootState } from '@/context/Notification.Store';
 import { incrementNotification, setNotificationCount } from '@/context/slices/notificationSlice';
 import axiosInstance from '@/helper/axiosIntance';
 import { caltimeAgo } from '@/lib/timeAgo';
-import { UserProfile } from '@/types';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
