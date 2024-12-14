@@ -57,45 +57,45 @@ const SignInPage: React.FC = () => {
     }
 
     console.log(data);
-    connectToSocket();
+    // connectToSocket();
   };
 
   const handleGoogleSignIn = () => {
     window.location.href = "http://localhost:3001/auth/google";
   };
 
-  const connectToSocket = () => {
-    const token = Cookies.get("access_token"); 
-    if (!token) {
-      console.error("No access_token found in cookies");
-      return;
-    }
+  // const connectToSocket = () => {
+  //   const token = Cookies.get("access_token"); 
+  //   if (!token) {
+  //     console.error("No access_token found in cookies");
+  //     return;
+  //   }
 
-    const socket = io("http://localhost:3000", {
-      extraHeaders: {
-        Authorization: `Bearer ${token}`, 
-      },
-    });
+  //   const socket = io("http://localhost:3000", {
+  //     extraHeaders: {
+  //       Authorization: `Bearer ${token}`, 
+  //     },
+  //   });
 
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
+  //   socket.on("connect", () => {
+  //     console.log("Connected to WebSocket server");
+  //   });
 
-    socket.on("connect_error", (err) => {
-      console.error("WebSocket connection failed", err);
-    });
+  //   socket.on("connect_error", (err) => {
+  //     console.error("WebSocket connection failed", err);
+  //   });
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
-    });
-  };
+  //   socket.on("disconnect", () => {
+  //     console.log("Disconnected from WebSocket server");
+  //   });
+  // };
 
-  useEffect(() => {
-    const token = Cookies.get("access_token");
-    if (token) {
-      connectToSocket();
-    }
-  }, []);
+  // useEffect(() => {
+  //   const token = Cookies.get("access_token");
+  //   // if (token) {
+  //   //   connectToSocket();
+  //   // }
+  // }, []);
 
   return (
     <div className="flex items-center justify-center h-screen w-full p-8">

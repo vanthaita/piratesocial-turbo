@@ -94,9 +94,22 @@ export class UserService {
 
   async findOneBy(email: string) {
     return this.prisma.user.findUnique({
-      where: { email },
+        where: { email },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            givenName: true,
+            familyName: true,
+            picture: true,
+            lastActiveAt: true,
+            providerId: true,
+            status: true,
+            createdAt: true,
+        },
     });
   }
+
 
   async insertOne(data: CreateUserDto) {
     return this.prisma.user.create({ data });

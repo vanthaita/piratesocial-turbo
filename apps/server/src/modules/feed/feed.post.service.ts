@@ -75,30 +75,30 @@ export class FeedPostService {
   
     const now = Date.now();
   
-    const scoredPosts = posts.map((post) => {
-      const recencyScore = Math.max(
-        0,
-        7 - (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-      );
-      const isMyPost = currentUserId ? post.user.id === currentUserId : false;
-      const createdWithin5Minutes =
-        now - new Date(post.createdAt).getTime() <= 5 * 60 * 1000;
-  
-      const priorityScore = isMyPost && createdWithin5Minutes ? 10 : 0;
-  
-      return {
-        ...post,
-        score:
-          (post.likesCount || 0) * 2 +
-          (post.comments?.length || 0) * 3 +
-          (post.retweets?.length || 0) * 1 +
-          recencyScore * 0.5 +
-          priorityScore,
-      };
-    });
-  
-    scoredPosts.sort((a, b) => b.score - a.score);
-  
+      const scoredPosts = posts.map((post) => {
+        const recencyScore = Math.max(
+          0,
+          7 - (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        const isMyPost = currentUserId ? post.user.id === currentUserId : false;
+        const createdWithin5Minutes =
+          now - new Date(post.createdAt).getTime() <= 5 * 60 * 1000;
+    
+        const priorityScore = isMyPost && createdWithin5Minutes ? 10 : 0;
+    
+        return {
+          ...post,
+          score:
+            (post.likesCount || 0) * 2 +
+            (post.comments?.length || 0) * 3 +
+            (post.retweets?.length || 0) * 1 +
+            recencyScore * 0.5 +
+            priorityScore,
+        };
+      });
+    
+      scoredPosts.sort((a, b) => b.score - a.score);
+    
     return scoredPosts.slice(skip, skip + take);
   }
   

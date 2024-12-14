@@ -21,8 +21,22 @@ export class NotificationsService {
       },
     });
   }
-
-  async notifyFollowers(userId: number, postId: number, postContent: string) {
+  async getNotification(userId: number) {
+    const [notifications, count] = await Promise.all([
+      this.prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.notification.count({
+        where: { userId },
+      }),
+    ]);
+    return {
+      notifications,
+      count,
+    };
+  }
+  async notifyFollowers(userId: number, postId: number, postContent: string, userName?: string) {
     const response = await axios.get(`http://localhost:3001/follow/followers`, {
       params: { userId },
     });
@@ -30,19 +44,19 @@ export class NotificationsService {
     const redisClient = this.redisService.getClient();
 
     for (const followerId of followers) {
-      const message = `User ${userId} created a new post: ${postContent}`;
+      const message = `${userId} created a new post`;
 
-      await this.createNotification(followerId, message, 'NewPost');
       const messageToSave = {
         postId,
         message,
       };
+      await this.createNotification(followerId, JSON.stringify(messageToSave), 'NewPost');
       redisClient.publish(
         `notifications:user:${followerId}`,
         JSON.stringify({
           messageToSave,
           userId,
-          timestamp: new Date().toISOString(),
+          createAt: new Date().toISOString(),
         }),
       );
     }
@@ -75,17 +89,17 @@ export class NotificationsService {
         throw new Error('Invalid action type');
     }
 
-    await this.createNotification(postOwner.userId, message, action);
     const messageToSave = {
       postId,
       message,
     };
+    await this.createNotification(postOwner.userId, JSON.stringify(messageToSave), action);
     redisClient.publish(
       `notifications:user:${postOwner.userId}`,
       JSON.stringify({
         messageToSave,
         userId,
-        timestamp: new Date().toISOString(),
+        createAt: new Date().toISOString(),
       }),
     );
   }

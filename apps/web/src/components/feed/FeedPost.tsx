@@ -8,6 +8,7 @@ import CommentModal from "./CommentModal";
 import ImageModal from "./ImageModal";
 import InteractionButtons from "./InteractionButtons";
 import { PostData } from "@/types";
+import Image from "next/image";
 
 
 const FeedPost: React.FC<PostData> = ({
@@ -49,10 +50,12 @@ const FeedPost: React.FC<PostData> = ({
          
         >
           <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 ">
-            <img
-              src={user.picture}
+            <Image
+              src={user.picture ||'/iil.jpg'}
               alt={`${user.name} profile`}
               className="object-cover w-full h-full"
+              width={200}
+              height={200}
             />
           </div>
           <div className="flex-1">

@@ -4,9 +4,10 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from 'src/dto/userDto/create-user.dto';
 import { User } from '@prisma/client';
-
+type UserWithoutPassword = Omit<User, 'password'>;
 @Injectable()
 export class AuthService {
+  
   constructor(
     private jwtService: JwtService,
     private usersService: UserService,
@@ -65,7 +66,7 @@ export class AuthService {
     }
   }
 
-  async getUser(email: string): Promise<User> {
+  async getUser(email: string): Promise<UserWithoutPassword> {
     try {
       return await this.usersService.findOneBy(email);
     } catch (error) {
