@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter as FontSans } from "next/font/google"
+import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ToggleProvider } from "@/context/control";
@@ -7,14 +7,14 @@ import ToastContainer from "@/components/ToastContainer";
 import { ToastProvider } from "@/context/ToastContext";
 import Loading from "./loading";
 import { Suspense } from "react";
-import SidebarLeft from "@/components/SidebarLeft";
-import SidebarRight from "@/components/SidebarRight";
 import Provider from "@/components/Provider/Provider";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { cookies } from "next/headers";
+
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
-})
+});
 
 const APP_NAME = "Pirate Social";
 const APP_DEFAULT_TITLE = "My Awesome Pirate Social App";
@@ -33,7 +33,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: APP_DEFAULT_TITLE,
-    // startUpImage: [],
   },
   formatDetection: {
     telephone: false,
@@ -60,11 +59,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#FFFFFF",
 };
+
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  const cookieStore = cookies();
+  const token = cookieStore.get("access_token")?.value;
   return (
     <html lang="en">
       <body
@@ -74,18 +76,16 @@ export default function RootLayout({
         )}
       >
         <ToggleProvider>
-        <AuthProvider>
-          <ToastProvider>
-                <Provider>
-                  {children}
-                </Provider>
-              <Suspense fallback={<Loading />} />
-            <ToastContainer />
-          </ToastProvider>
+          <AuthProvider accesstoken={token as string}>
+            <ToastProvider>
+              <Provider>
+                <Suspense fallback={<Loading />}>{children}</Suspense>
+              </Provider>
+              <ToastContainer />
+            </ToastProvider>
           </AuthProvider>
         </ToggleProvider>
       </body>
     </html>
   );
 }
-

@@ -1,16 +1,21 @@
-'use client'
-import React, { createContext, useContext, useState, ReactNode } from "react";
+'use client';
+import axiosInstance from "@/helper/axiosIntance";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import Cookies from "js-cookie"; 
 
 interface Profile {
-  id: number;
-  name: string;
-  email: string;
-  givenName?: string;
-  familyName?: string;
-  picture?: string;
-  providerId?: string;
-  createdAt: Date;
+  id: string,
+  name: string,
+  email: string,
+  givenName: string,
+  familyName: string,
+  picture: string,
+  lastActiveAt: Date,
+  providerId: string,
+  status: string,
+  createdAt: Date,
 }
+
 interface AuthContextProps {
   accessToken: string | null;
   profile: Profile | null;
@@ -32,12 +37,35 @@ export const useAuth = (): AuthContextProps => {
 
 interface AuthProviderProps {
   children: ReactNode;
+  accesstoken: string | null;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, accesstoken }) => {
+  const [accessToken, setAccessToken] = useState<string | null>(accesstoken);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!accessToken);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axiosInstance.get('/auth/profile');
+      console.log("Data profile: ",response.data)
+      const data = response.data as Profile;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+  useEffect(() => {
+    if (accessToken) {
+      fetchProfile();
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+      setProfile(null);
+    }
+    console.log("Access Token: ",accessToken);
+    
+  }, [accessToken]);
 
   return (
     <AuthContext.Provider

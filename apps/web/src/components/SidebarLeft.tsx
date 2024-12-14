@@ -6,6 +6,9 @@ import { AiOutlinePlus } from "react-icons/ai";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import NewPostModal from "./NewPostModal";
+import { useSelector } from "react-redux";
+import { RootState } from "@/context/Notification.Store";
+import Image from "next/image";
 
 interface MenuItem {
   label: string;
@@ -16,26 +19,36 @@ interface MenuItem {
 
 const SidebarLeft: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>("Home");
-  const { isAuthenticated } = useAuth();
-  const [notificationsCount, setNotificationsCount] = useState<number>(3);
-
+  const { isAuthenticated, profile } = useAuth();
+  const notificationCount = useSelector(
+    (state: RootState) => state.notifications.count
+  );
   const menuItems: MenuItem[] = [
     { label: "Home", icon: <Home /> ,href: '/'},
     { label: "Search", icon: <Search /> ,href: '/search'},
-    { label: "Notifications", icon: <Bell />,href: '/notifications' ,notificationCount: notificationsCount},
+    { label: "Notifications", icon: <Bell />,href: '/notifications' ,notificationCount: notificationCount || 0},
     { label: "Messages", icon: <Mail />, href: '/messages' },
     { label: "Profile", icon: <User /> ,href: `/profile/1`},
   ];
   return (
     <>
-      {!isAuthenticated ? (
+      {isAuthenticated ? (
         <aside className="w-[20%] h-full flex flex-col items-center py-4 space-y-6 border-r border-gray-300">
           <div className="flex flex-col items-center space-y-2 mb-4">
-            <div className="rounded-full border-2 border-gray-800 w-16 h-16 flex items-center justify-center">
-              <span className="text-3xl font-bold text-gray-800">@</span>
+            <div className="rounded-full w-16 h-16 flex items-center justify-center">
+              <span className="text-3xl font-bold text-gray-800">
+                <Image 
+                  src={profile?.picture || ''}
+                  alt={profile?.name || 'avatar'}
+                  height={200}
+                  width={200}
+                  className="object-fit rounded-full"
+                />
+              </span>
             </div>
             <h1 className="text-2xl font-bold tracking-wide text-gray-800">
-              Pirate Social
+              {/* Pirates Social */}
+              @{profile?.name}
             </h1>
           </div>
           <nav className="flex flex-col w-full px-4 space-y-2">
@@ -54,7 +67,7 @@ const SidebarLeft: React.FC = () => {
               >
                  <div className="relative">
                   <div className="text-gray-800">{item.icon}</div>
-                  {item.notificationCount && item.notificationCount > 0 && (
+                  {(item.notificationCount ?? 0) > 0 && (
                     <span className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs rounded-full px-2 py-1">
                       {item.notificationCount}
                     </span>

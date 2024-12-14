@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { v4 as uuidv4 } from 'uuid';
-
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
+import * as https from 'https';
 @Injectable()
 export class AwsS3Service {
   private readonly bucketName = process.env.AWS_S3_BUCKET_NAME;
@@ -15,7 +16,15 @@ export class AwsS3Service {
         accessKeyId: process.env.AWS_S3_ACCESS_KEY,
         secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
       },
+      requestHandler: new NodeHttpHandler({
+        httpAgent: new https.Agent({
+          keepAlive: true,
+          maxSockets: 50,
+          timeout: 60000,
+        }),
+      }),
     });
+    
   }
 
   async uploadImage(imageBuffer: Buffer, mimeType: string): Promise<string> {
