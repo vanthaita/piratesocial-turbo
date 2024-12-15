@@ -10,7 +10,7 @@ import ProfileSidebar from './profileSidebar';
 import axiosInstance from '@/helper/axiosIntance';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-
+import Image from 'next/image';
 // const contacts = [
 //   { name: 'Lauri Edmon', status: 'Writing...', time: '12.52', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
 //   { name: 'Julian Gruber', status: 'Send audio...', time: '20.25', unread: 2, imgSrc: '/icons/android-chrome-192x192.png', category: 'Private' },
@@ -83,7 +83,7 @@ const Sidebar = ({className} : {className: any}) => {
   return (
     <>
     <aside className={`min-w-1/4 w-full md:w-1/4 h-screen bg-white shadow-md overflow-y-auto sidebar ${className}`}>
-      <div className="flex items-center px-4 py-2">
+      <div className="flex items-center px-4 py-2 relative">
         <button
           aria-haspopup="true"
           className="p-2 text-gray-700 rounded-full focus:outline-none hover:text-gray-600 hover:bg-gray-200"
@@ -114,17 +114,39 @@ const Sidebar = ({className} : {className: any}) => {
           />
         </div>
         {results.length > 0 && (
-        <div className="bg-white rounded-md shadow-md mt-2 max-h-[200px] overflow-y-auto">
-          {results.map((user) => (
-            <div key={user.id} className="p-2 border-b last:border-b-0 cursor-pointer"
-              onClick={() => {handleCreateRoomChat(user.id)}}
-            >
-              <p className="font-medium">{user.name}</p>
-              <p className="text-sm text-gray-500">{user.email}</p>
-            </div>
-          ))}
-        </div>
-      )}
+          <div className="absolute top-[100%] left-0 w-full bg-white rounded-lg shadow-lg mt-1 max-h-[300px] overflow-y-auto z-50">
+            {results.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center p-2 hover:bg-gray-100 cursor-pointer transition-all"
+                onClick={() => handleCreateRoomChat(user.id)}
+              >
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-gray-700 text-sm font-semibold">
+                    <Image 
+                      src={user.picture}
+                      alt={user.name}
+                      width={40}
+                      height={40}
+                      className="rounded-full"
+                    />
+                  </span>
+                </div>
+                <div className="flex flex-col truncate">
+                  <p className="font-medium text-gray-800 truncate">{user.name}</p>
+                  <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Loading Spinner */}
+        {/* {isLoading && (
+          <div className="absolute top-[100%] left-0 w-full bg-white rounded-lg shadow-lg mt-1 p-4 flex justify-center">
+            <div className="w-6 h-6 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+          </div>
+        )} */}
       </div>
       {/* <div className="w-full overflow-x-auto flex space-x-4 px-4 py-2">
           {reels.map((reel, index) => (

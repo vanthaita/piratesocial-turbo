@@ -8,7 +8,7 @@ import { ToastProvider } from "@/context/ToastContext";
 import Loading from "./loading";
 import { Suspense } from "react";
 import Provider from "@/components/Provider/Provider";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { cookies } from "next/headers";
 
 const fontSans = FontSans({

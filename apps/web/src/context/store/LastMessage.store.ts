@@ -1,11 +1,10 @@
-// redux/store.ts
 import { configureStore } from '@reduxjs/toolkit';
-import notificationReducer from './slices/notificationSlice';
-
+import lastMessageReducer from '../slices/lastMessage.slice'
+// Configure the store
 export const store = configureStore({
-  reducer: {
-    notifications: notificationReducer,
-  },
+    reducer: {
+        lastMessage: lastMessageReducer,
+    },
 });
 
 export type RootState = ReturnType<typeof store.getState>;

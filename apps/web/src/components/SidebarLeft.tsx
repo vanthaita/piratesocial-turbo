@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import NewPostModal from "./NewPostModal";
 import { useSelector } from "react-redux";
-import { RootState } from "@/context/Notification.Store";
+import { RootState } from "@/context/store/Notification.Store";
 import Image from "next/image";
 
 interface MenuItem {

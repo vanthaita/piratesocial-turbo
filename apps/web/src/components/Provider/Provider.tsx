@@ -5,7 +5,7 @@ import React, { ReactNode } from 'react';
 import SidebarLeft from '../SidebarLeft';
 import SidebarRight from '../SidebarRight';
 import { Provider as ReduxProvider } from 'react-redux';
-import { store } from '@/context/Notification.Store';
+import { store } from '@/context/store/Notification.Store';
 
 interface LayoutProviderProps {
   children: ReactNode;
@@ -13,12 +13,12 @@ interface LayoutProviderProps {
 
 const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const pathname = usePathname();
-  const normalizedPathname = pathname.replace(/\/$/, ''); // Remove trailing slash
+  const normalizedPathname = pathname.replace(/\/$/, '');
   const noSidebarPaths = ['/sign-in', '/sign-up', '/messages/*', '/'];
   
   const isNoSidebarPage = noSidebarPaths.some((path) => {
     if (path.endsWith('/*')) {
-      return normalizedPathname.startsWith(path.slice(0, -2)); // Match paths like `/messages/*`
+      return normalizedPathname.startsWith(path.slice(0, -2));
     }
     return normalizedPathname === path; 
   });

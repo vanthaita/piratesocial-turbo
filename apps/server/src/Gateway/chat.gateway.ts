@@ -79,7 +79,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           picture: sentMessage.sender.picture,
         },
       });
-      this.roomUserService.updateLastMessageinRoom(parseInt(message.roomId,10), message.message)
+      this.roomUserService.updateLastMessageinRoom(parseInt(message.roomId,10), message.message, sentMessage.createdAt.toString())
       console.log(`Sent to room ${message.roomId}:`, {
         content: message.message,
         sender: user.email,

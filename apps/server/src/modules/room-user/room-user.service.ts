@@ -64,13 +64,14 @@ export class RoomUserService {
       },
     });
   }
-  async updateLastMessageinRoom(roomId: number, lastMessage: string) {
+  async updateLastMessageinRoom(roomId: number, lastMessage: string, createdAt: string) {
     return this.prisma.roomUser.updateMany({
       where: {
         roomId,
       },
       data: {
-        lastMessage,  
+        lastMessage, 
+        time: createdAt,
       },
     });
   }

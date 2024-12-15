@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useToggle } from '@/context/control'; 
+import { useToggle } from '@/context/control';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/context/store/LastMessage.store';
+import { caltimeAgo } from '@/lib/timeAgo';
 
 interface Room {
   id: number;
   name: string;
-  type: "ONE_TO_ONE" | "GROUP"; // Adjust "GROUP" if there are other possible types
+  type: 'ONE_TO_ONE' | 'GROUP';
   createdAt: string; // ISO 8601 date string
 }
 
@@ -15,8 +18,8 @@ interface ChatData {
   roomId: number;
   userId: number;
   name: string;
-  status: "active" | "inactive" | "offline"; 
-  time: string; 
+  status: 'active' | 'inactive' | 'offline';
+  time: string;
   lastMessage: string;
   unread: number;
   imgSrc: string;
@@ -24,14 +27,21 @@ interface ChatData {
 }
 
 interface ContactItemProps {
-  contact: ChatData; 
+  contact: ChatData;
 }
 
 const ContactItem: React.FC<ContactItemProps> = ({ contact }) => {
   const { toggleChildren } = useToggle();
-  
+
+  const lastMessage = useSelector(
+    (state: RootState) => state.lastMessage?.lastMessage || contact.lastMessage
+  );
+  const lastMessageTimestamp = useSelector(
+    (state: RootState) => state.lastMessage?.timestamp || contact.time
+  );
+
   return (
-    <Link href={`/messages/${contact.roomId}`} key={contact.id} onClick={toggleChildren}>
+    <Link href={`/messages/${contact.roomId}`} onClick={toggleChildren}>
       <li className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
         <div className="relative">
           <Image
@@ -42,19 +52,18 @@ const ContactItem: React.FC<ContactItemProps> = ({ contact }) => {
             className="w-10 h-10 rounded-full object-cover"
           />
           {contact.unread > 0 && (
-            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center">
-              <span className="flex items-center justify-center w-5 h-5 text-xs text-white bg-green-500 rounded-full">
-                {contact.unread}
-              </span>
+            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">
+              {contact.unread}
             </div>
           )}
         </div>
+
         <div className="flex-grow">
           <div className="flex justify-between items-center">
             <h4 className="font-semibold">{contact.name}</h4>
-            <span className="text-xs text-gray-500">{contact.time}</span>
+            <span className="text-xs text-gray-500">{caltimeAgo(lastMessageTimestamp)}</span>
           </div>
-          <p className="text-sm text-gray-600">{contact.lastMessage}</p>
+          <p className="text-sm text-gray-600">{lastMessage}</p>
         </div>
       </li>
     </Link>
