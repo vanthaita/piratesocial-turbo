@@ -66,20 +66,6 @@ export class RoomService {
     });
   
     if (!existingRoomUserForUser) {
-      const userDetails = await this.getNameAndImageUser(userId);
-      const detailsForUserId = {
-        name: userDetails.name,
-        status: 'active',
-        time: 'now',
-        lastMessage: '',
-        unread: 0,
-        imgSrc: userDetails.picture,
-      };
-  
-      await this.roomUserService.addUserToRoom(existingRoom.id, userId, detailsForUserId);
-    }
-  
-    if (!existingRoomUserForAnotherUser) {
       const anotherUserDetails = await this.getNameAndImageUser(anotherUserId);
       const detailsForAnotherUserId = {
         name: anotherUserDetails.name,
@@ -90,7 +76,22 @@ export class RoomService {
         imgSrc: anotherUserDetails.picture,
       };
   
-      await this.roomUserService.addUserToRoom(existingRoom.id, anotherUserId, detailsForAnotherUserId);
+  
+      await this.roomUserService.addUserToRoom(existingRoom.id, userId, detailsForAnotherUserId);
+    }
+  
+    if (!existingRoomUserForAnotherUser) {
+      
+      const userDetails = await this.getNameAndImageUser(userId);
+      const detailsForUserId = {
+        name: userDetails.name,
+        status: 'active',
+        time: 'now',
+        lastMessage: '',
+        unread: 0,
+        imgSrc: userDetails.picture,
+      };
+      await this.roomUserService.addUserToRoom(existingRoom.id, anotherUserId, detailsForUserId);
     }
   
     return existingRoom;

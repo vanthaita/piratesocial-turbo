@@ -1,4 +1,3 @@
-// redux/slices/notificationSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface NotificationState {

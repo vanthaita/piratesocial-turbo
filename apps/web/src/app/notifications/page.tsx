@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 import { useAuth } from '@/context/AuthContext';
-import { AppDispatch, RootState } from '@/context/Notification.Store';
+import { AppDispatch, RootState } from '@/context/store/Notification.Store';
 import { incrementNotification, setNotificationCount } from '@/context/slices/notificationSlice';
 import axiosInstance from '@/helper/axiosIntance';
 import { caltimeAgo } from '@/lib/timeAgo';

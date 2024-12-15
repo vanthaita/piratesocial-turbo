@@ -15,6 +15,9 @@ import { Message, Profile, UserProfile } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import axiosInstance from '@/helper/axiosIntance';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/context/store/LastMessage.store';
+import { setLastMessage } from '@/context/slices/lastMessage.slice';
 const MessagePage = () => {
   const { toggleChildren } = useToggle();  
   const [messages, setMessages] = useState<Array<Message>>([]);
@@ -30,6 +33,7 @@ const MessagePage = () => {
   const roomInPathName = usePathname();
   const roomId = roomInPathName.split('/')[2];
   const {profile} = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -73,6 +77,7 @@ const MessagePage = () => {
               audioRef.current.play().catch((error) => console.error('Error playing audio:', error));
             }
             setMessages((prevMessages) => [...prevMessages, message]);
+            dispatch(setLastMessage({ lastMessage: message.message, timestamp: message.createdAt }))
           });
   
           newSocket.on('joinedRoom', (roomId: string) => {
