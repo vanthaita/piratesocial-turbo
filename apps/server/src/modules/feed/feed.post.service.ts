@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  Inject,
+} from '@nestjs/common';
 import { FeedPost, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ClientProxy } from '@nestjs/microservices';
 import { RedisService } from '../redis/redis.service';
-import { console } from 'inspector';
 import { AwsS3Service } from '../aws/aws.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -12,8 +16,9 @@ export class FeedPostService {
   private readonly cacheKeyAllPosts = 'feed:allPosts';
   private readonly cacheKeyDiscoverPosts = 'feed:discover';
   private readonly cacheKeyUserPosts = (userId: number) => `feed:userPosts:${userId}`;
-  private readonly cacheKeyPostComments = (postId: number) => `feed:postComments:${postId}`;
   private readonly cacheKeyPostDetails = (postId: number) => `feed:postDetails:${postId}`;
+  private readonly cacheKeyPostComments = (postId: number) => `feed:postComments:${postId}`;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
@@ -21,114 +26,91 @@ export class FeedPostService {
     private readonly notificationService: NotificationsService,
     @Inject('RABBITMQ_CLIENT') private readonly rabbitMQClient: ClientProxy,
   ) {}
+
+  private getCacheKey(prefix: string, skip: number, take: number): string {
+    return `${prefix}:${skip}:${take}`;
+  }
   async getFeedAllPosts(skip = 0, take = 10) {
     const redisClient = this.redisService.getClient();
-    const cacheKey = `${this.cacheKeyAllPosts}:${skip}:${take}`;
-    
+    const cacheKey = this.getCacheKey(this.cacheKeyAllPosts, skip, take);
+
     const cachedData = await redisClient.get(cacheKey);
-    console.log(cachedData);
     if (cachedData) {
       return JSON.parse(cachedData);
     }
-  
+
     const posts = await this.prisma.feedPost.findMany({
-      skip: skip,
-      take: take,
+      skip,
+      take,
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { id: true, name: true, providerId: true, picture: true } },
         likes: true,
-        comments: {
-          select: {
-            user: {
-              select: { id: true, name: true, providerId: true, picture: true }
-            },
-            createdAt: true,
-            content: true,
-            userId: true,
-            postId: true,
-          }
-        },
+        comments: true,
         retweets: true,
       },
-      distinct: ['id'],  
     });
-  
-    await redisClient.set(cacheKey, JSON.stringify(posts), 'EX', 60);  
-  
+
+    await redisClient.set(cacheKey, JSON.stringify(posts), 'EX', 120); 
+
     return posts;
   }
   async getDiscoverPosts(skip = 0, take = 10, currentUserId?: number) {
+    const redisClient = this.redisService.getClient();
+    const cacheKey = this.getCacheKey(this.cacheKeyDiscoverPosts, skip, take);
+
+    try {
+      const cachedData = await redisClient.get(cacheKey);
+      if (cachedData) return JSON.parse(cachedData);
+    } catch (err) {
+      console.error(`Error retrieving cached data for key ${cacheKey}:`, err);
+    }
+
     const posts = await this.prisma.feedPost.findMany({
       include: {
-        user: { select: { id: true, name: true, providerId: true, picture: true } },
+        user: { select: { id: true, name: true, picture: true } },
         likes: true,
-        comments: {
-          select: {
-            user: { select: { id: true, name: true, picture: true } },
-            content: true,
-          },
-        },
+        comments: true,
         retweets: true,
       },
     });
-  
     const now = Date.now();
-  
-      const scoredPosts = posts.map((post) => {
-        const recencyScore = Math.max(
-          0,
-          7 - (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-        );
-        const isMyPost = currentUserId ? post.user.id === currentUserId : false;
-        const createdWithin5Minutes =
-          now - new Date(post.createdAt).getTime() <= 5 * 60 * 1000;
-    
-        const priorityScore = isMyPost && createdWithin5Minutes ? 10 : 0;
-    
-        return {
-          ...post,
-          score:
-            (post.likesCount || 0) * 2 +
-            (post.comments?.length || 0) * 3 +
-            (post.retweets?.length || 0) * 1 +
-            recencyScore * 0.5 +
-            priorityScore,
-        };
-      });
-    
-      scoredPosts.sort((a, b) => b.score - a.score);
-    
-    return scoredPosts.slice(skip, skip + take);
-  }
-  
-  
-  async getCachedDiscoverPosts(skip = 0, take = 10, currentUser?: number) {
-    const redisKey = `${this.cacheKeyAllPosts}:${skip}:${take}`;
-    const redisClient = this.redisService.getClient();
-  
+    const scoredPosts = posts.map((post) => {
+      const recencyScore = Math.max(
+        0,
+        7 - (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const isMyPost = currentUserId ? post.user.id === currentUserId : false;
+      const priorityScore = isMyPost ? 10 : 0;
+
+      return {
+        ...post,
+        score:
+          (post.likes.length || 0) * 2 +
+          (post.comments.length || 0) * 3 +
+          recencyScore * 0.5 +
+          priorityScore,
+      };
+    });
+
+    scoredPosts.sort((a, b) => b.score - a.score);
+    const paginatedPosts = scoredPosts.slice(skip, skip + take);
+
     try {
-      const cachedData = await redisClient.get(redisKey);
-      if (cachedData) {
-        return JSON.parse(cachedData);
-      }
+      await redisClient.set(cacheKey, JSON.stringify(paginatedPosts), 'EX', 120);
     } catch (err) {
-      console.error(`Error parsing cached data for key ${redisKey}:`, err);
+      console.error(`Error caching data for key ${cacheKey}:`, err);
     }
-    const posts = await this.getDiscoverPosts(skip, take,currentUser);
-    try {
-      await redisClient.set(redisKey, JSON.stringify(posts), 'EX', 60);
-    } catch (err) {
-      console.error(`Error caching data for key ${redisKey}:`, err);
-    }
-    return posts;
+
+    return paginatedPosts;
   }
-  
-  
-  async createFeedPost(data: Prisma.FeedPostCreateInput, userId: number, files?: Express.Multer.File[]) {
+  async createFeedPost(
+    data: Prisma.FeedPostCreateInput,
+    userId: number,
+    files?: Express.Multer.File[],
+  ) {
     const redisClient = this.redisService.getClient();
-    console.log('Creating feed post...');
-    console.log('Files received:', files);
+
     const imageUrls = files
       ? await Promise.all(
           files.map(async (file) =>
@@ -136,32 +118,40 @@ export class FeedPostService {
           ),
         )
       : [];
-    console.log('Image URLs:', imageUrls);
-  
+
     const newPost = await this.prisma.feedPost.create({
-      data: { userId, content: data.content, imagesUrl: imageUrls || [] },
+      data: { userId, content: data.content, imagesUrl: imageUrls },
     });
-    console.log('New post created:', newPost);
-  
-    const allPostKeys = await redisClient.keys(`${this.cacheKeyAllPosts}:*`);
-    if (allPostKeys.length > 0) {
-      console.log('Clearing all post keys from cache:', allPostKeys);
-      await redisClient.del(allPostKeys);
-    }
-    console.log(`Clearing user post cache for userId: ${userId}`);
-    await redisClient.del(this.cacheKeyUserPosts(userId));
-    // console.log('Emitting cache_update event...');
-    // this.rabbitMQClient.emit('cache_update', {
-    //   type: 'CREATE_POST',
-    //   userId,
-    //   postId: newPost.id,
-    // });
+
+    await redisClient.del(this.getCacheKey(this.cacheKeyAllPosts, 0, 10));
+    await redisClient.del(this.getCacheKey(this.cacheKeyDiscoverPosts, 0, 10));
+
     await this.notificationService.notifyFollowers(userId, newPost.id, newPost.content);
-    // console.log('cache_update event emitted successfully.');
+
     return newPost;
   }
-  
 
+  async updatePostInCache(postId: number, updateData: Partial<FeedPost>) {
+    const redisClient = this.redisService.getClient();
+
+    const cacheKeys = await redisClient.keys(`feed:*:${postId}`);
+
+    for (const key of cacheKeys) {
+      try {
+        const cachedData = await redisClient.get(key);
+        if (cachedData) {
+          const posts = JSON.parse(cachedData);
+          const updatedPosts = posts.map((post) =>
+            post.id === postId ? { ...post, ...updateData } : post,
+          );
+          await redisClient.set(key, JSON.stringify(updatedPosts), 'EX', 120);
+        }
+      } catch (err) {
+        console.error(`Error updating cache for key ${key}:`, err);
+      }
+    }
+  }
+  
   async likePost(postId: number, userId: number) {
     const redisClient = this.redisService.getClient();
   
@@ -182,14 +172,9 @@ export class FeedPostService {
       const post = JSON.parse(cachedPost);
       post.likesCount += 1;
       post.likes = [...(post.likes || []), { userId }];
-      await redisClient.set(postCacheKey, JSON.stringify(post), 'EX', 120); 
+      await redisClient.set(postCacheKey, JSON.stringify(post), 'EX', 60); 
     }
     await redisClient.del(this.cacheKeyAllPosts);
-    // this.rabbitMQClient.emit('cache_update', {
-    //   type: 'LIKE_POST',
-    //   postId,
-    //   userId,
-    // });
     await this.notificationService.likePost(userId, updatedPost.id);
     return updatedPost;
   }
@@ -345,19 +330,18 @@ export class FeedPostService {
     if (!post) {
       throw new NotFoundException('Post not found.');
     }
-    await redisClient.set(cacheKey, JSON.stringify(post), 'EX', 120); 
+    await redisClient.set(cacheKey, JSON.stringify(post), 'EX', 60); 
 
     return post;
   }
 
   async getCommentPost(postId: number, skip = 0, take = 10) {
-    const redisClient = this.redisService.getClient();
-    const cacheKey = `${this.cacheKeyPostComments(postId)}:${skip}:${take}`;
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      return JSON.parse(cachedData);
-    }
-  
+    // const redisClient = this.redisService.getClient();
+    // const cacheKey = `${this.cacheKeyPostComments(postId)}:${skip}:${take}`;
+    // const cachedData = await redisClient.get(cacheKey);
+    // if (cachedData) {
+    //   return JSON.parse(cachedData);
+    // }
     const comments = await this.prisma.feedPostComment.findMany({
       where: { postId },
       skip,
@@ -367,8 +351,7 @@ export class FeedPostService {
       },
       orderBy: { createdAt: 'asc' },
     });
-  
-    await redisClient.set(cacheKey, JSON.stringify(comments), 'EX', 60);
+    // await redisClient.set(cacheKey, JSON.stringify(comments), 'EX', 60);
     console.log("Comment:", comments)
     return comments;
   }

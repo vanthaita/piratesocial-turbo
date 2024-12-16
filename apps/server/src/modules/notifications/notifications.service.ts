@@ -105,7 +105,6 @@ export class NotificationsService {
   }
 
   async likePost(userId: number, postId: number) {
-    console.log("likes");
     await this.notifyPostOwner(userId, postId, 'Like');
   }
 

@@ -53,6 +53,7 @@ const TweetViewPage: React.FC = () => {
         params: { skip: skipRef.current * TAKE, take: TAKE },
       });
       const newComments = responseComment.data;
+      console.log(newComments);
       if (newComments.length === 0) {
         setHasMore(false);
       } else {
@@ -88,9 +89,7 @@ const TweetViewPage: React.FC = () => {
   );
 
   useEffect(() => {
-    if (postId) {
       loadComments();
-    }
   }, [postId]);
 
   const openImageModal = (index: number): void => {
@@ -108,6 +107,7 @@ const TweetViewPage: React.FC = () => {
   };
 
   const closeCommentModal = (): void => {
+    loadComments();
     setIsModalOpen(false);
   };
 
@@ -167,7 +167,7 @@ const TweetViewPage: React.FC = () => {
             <InteractionButtons
               likeCount={post.likesCount}
               commentsCount={post.comments.length}
-              retweetsCount={post.likes.length}
+              retweetsCount={post.retweetsCount}
               handleCommentClick={handleCommentClick}
               postId={post.id}
               setLikeCount={(count) =>

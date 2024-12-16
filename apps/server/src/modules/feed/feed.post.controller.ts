@@ -29,7 +29,7 @@ export class FeedPostController {
   }
   @Get('all')
   async getAllPosts(@Query('skip') skip = 0, @Query('take') take = 10, @Query('currentUser') currentUser?: number) {
-    const posts = await this.feedPostService.getFeedAllPosts(+skip, +take);
+    const posts = await this.feedPostService.getDiscoverPosts(+skip, +take);
     return posts;
   }
 

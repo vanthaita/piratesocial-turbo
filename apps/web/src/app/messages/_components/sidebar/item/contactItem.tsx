@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+'use client'
+import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useToggle } from '@/context/control';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/context/store/LastMessage.store';
@@ -10,7 +11,7 @@ interface Room {
   id: number;
   name: string;
   type: 'ONE_TO_ONE' | 'GROUP';
-  createdAt: string; // ISO 8601 date string
+  createdAt: string;
 }
 
 interface ChatData {
@@ -31,6 +32,7 @@ interface ContactItemProps {
 }
 
 const ContactItem: React.FC<ContactItemProps> = ({ contact }) => {
+  const router = useRouter();
   const { toggleChildren } = useToggle();
 
   const lastMessage = useSelector(
@@ -40,33 +42,43 @@ const ContactItem: React.FC<ContactItemProps> = ({ contact }) => {
     (state: RootState) => state.lastMessage?.timestamp || contact.time
   );
 
-  return (
-    <Link href={`/messages/${contact.roomId}`} onClick={toggleChildren}>
-      <li className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
-        <div className="relative">
-          <Image
-            height={40}
-            width={40}
-            src={contact.imgSrc}
-            alt={contact.name}
-            className="w-10 h-10 rounded-full object-cover"
-          />
-          {contact.unread > 0 && (
-            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">
-              {contact.unread}
-            </div>
-          )}
-        </div>
+  const handleNavigation = () => {
+    toggleChildren();
+    router.push(
+      `/messages/${contact.roomId}?name=${encodeURIComponent(contact.name)}&imgSrc=${encodeURIComponent(contact.imgSrc)}`
+    );
+  };
 
-        <div className="flex-grow">
-          <div className="flex justify-between items-center">
-            <h4 className="font-semibold">{contact.name}</h4>
-            <span className="text-xs text-gray-500">{caltimeAgo(lastMessageTimestamp)}</span>
+  return (
+    <li
+      onClick={handleNavigation}
+      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+    >
+      <div className="relative">
+        <Image
+          height={40}
+          width={40}
+          src={contact.imgSrc}
+          alt={contact.name}
+          className="w-10 h-10 rounded-full object-cover"
+        />
+        {contact.unread > 0 && (
+          <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">
+            {contact.unread}
           </div>
-          <p className="text-sm text-gray-600">{lastMessage}</p>
+        )}
+      </div>
+
+      <div className="flex-grow">
+        <div className="flex justify-between items-center">
+          <h4 className="font-semibold">{contact.name}</h4>
+          <span className="text-xs text-gray-500">
+            {caltimeAgo(lastMessageTimestamp)}
+          </span>
         </div>
-      </li>
-    </Link>
+        <p className="text-sm text-gray-600">{lastMessage}</p>
+      </div>
+    </li>
   );
 };
 

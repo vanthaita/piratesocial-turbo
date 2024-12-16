@@ -13,7 +13,7 @@ import { CiFileOn } from "react-icons/ci";
 import { EllipsisVertical } from 'lucide-react';
 import { Message, Profile, UserProfile } from '@/types';
 import { useAuth } from '@/context/AuthContext';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import axiosInstance from '@/helper/axiosIntance';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/context/store/LastMessage.store';
@@ -34,6 +34,9 @@ const MessagePage = () => {
   const roomId = roomInPathName.split('/')[2];
   const {profile} = useAuth();
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
+  const name = searchParams.get('name');
+  const imgSrc = searchParams.get('imgSrc');
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -194,12 +197,12 @@ const MessagePage = () => {
             <Image
               width={200}
               height={200}
-              src="/icons/android-chrome-192x192.png"
+              src={imgSrc || ''}
               alt="User"
               className="w-10 h-10 rounded-full"
             />
             <div className="ml-4">
-              <p className="text-lg font-bold">Karen</p>
+              <p className="text-lg font-bold">{name}</p>
               <p className="text-sm">Online</p>
             </div>
           </div>
