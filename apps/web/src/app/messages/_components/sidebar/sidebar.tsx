@@ -53,7 +53,8 @@ const Sidebar = ({className} : {className: any}) => {
   };
   const handleCreateRoomChat = async (anotherId: number) => {
     const response = await axiosInstance.post(`room/create-one-to-one/${anotherId}`)
-    router.push(`/messages/${response.data.id}`);
+    // router.push(`/messages/${response.data.id}`);
+    router.refresh();
   }
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchValue = e.target.value;

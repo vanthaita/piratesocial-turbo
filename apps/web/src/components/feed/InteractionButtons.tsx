@@ -72,7 +72,8 @@ const InteractionButtons: React.FC<InteractionButtonsProps> = ({
                     hasUserLiked ? "fill-current text-red-500" : ""
                 }`}
                 />
-                <span>{likeCount} Like</span>
+                {/* <span>{likeCount} Like</span> */}
+                <span>Like</span>
             </button>
             <button
                 className="flex items-center space-x-1 hover:text-blue-500 transition-all"
