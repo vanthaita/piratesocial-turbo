@@ -1,6 +1,4 @@
-Tuyệt vời! Dưới đây là phiên bản README.md đã được thêm hỗ trợ đa ngôn ngữ (tiếng Anh, tiếng Nhật và tiếng Việt), sử dụng các thẻ HTML `details` và `summary` để giúp README gọn gàng hơn:
 
-```markdown
 <details>
 <summary>English</summary>
 
@@ -731,23 +729,4 @@ PirateSocial được cấp phép theo [Giấy phép MIT](LICENSE).
 Chúc bạn có một hành trình thú vị trên **PirateSocial**! Arr matey! 🚀
 
 </details>
-```
 
-**Giải thích:**
-
-*   **Vị trí tiếng Nhật:** Phần tiếng Nhật đã được thêm vào giữa phần tiếng Anh và tiếng Việt.
-*   **Thẻ `<details>` và `<summary>`:** Cấu trúc này giúp người dùng dễ dàng chọn ngôn ngữ mình muốn đọc, làm cho file README.md gọn gàng hơn.
-*   **Tính tương thích:** Cách này hoạt động tốt trên GitHub và các trình duyệt hiện đại.
-
-**Cách sử dụng:**
-
-1.  Copy toàn bộ đoạn mã trên và thay thế nội dung trong file `README.md` của bạn.
-2.  Push các thay đổi lên GitHub.
-
-**Lợi ích:**
-
-*   **Ngắn gọn:** README không còn dài dòng và khó đọc.
-*   **Đa ngôn ngữ:** Hỗ trợ nhiều ngôn ngữ (tiếng Anh, tiếng Nhật và tiếng Việt), giúp người dùng trên toàn thế giới hiểu rõ về dự án.
-*   **Dễ dùng:** Giao diện trực quan, dễ sử dụng cho cả người mới bắt đầu.
-
-Hi vọng điều này giúp ích cho bạn! Nếu bạn có bất kỳ câu hỏi nào khác, cứ hỏi nhé.
