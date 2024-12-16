@@ -111,6 +111,7 @@ User --> [Client Application] --> [Load Balancer] --> [App Service]
                                             |
                                             |----- [Background Worker] (Process Task)
 ```
+![image](https://github.com/user-attachments/assets/04f4f4d8-e8b1-4184-a33e-1cd3fb5ea822)
 
 ---
 
@@ -354,6 +355,7 @@ Enjoy your journey on **PirateSocial**! Arr matey! 🚀
                                             |
                                             |----- [バックグラウンドワーカー] (タスクの処理)
 ```
+![image](https://github.com/user-attachments/assets/d944c39e-7fc3-4a17-9785-98b97e86d81f)
 
 ---
 
@@ -598,6 +600,7 @@ Người dùng --> [Ứng dụng Client] --> [Bộ cân bằng tải] --> [Dịc
                                             |
                                             |----- [Worker nền] (Xử lý tác vụ)
 ```
+![image](https://github.com/user-attachments/assets/fedecd51-e8fe-4557-90d2-0926b33a4623)
 
 ---
 
