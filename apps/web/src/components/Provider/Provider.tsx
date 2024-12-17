@@ -7,7 +7,8 @@ import SidebarRight from '../SidebarRight';
 import { Provider as ReduxProvider } from 'react-redux';
 import { store } from '@/context/store/Notification.Store';
 import NotificationFetcher from './Notification.fetcher';
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 interface LayoutProviderProps {
   children: ReactNode;
 }
@@ -38,6 +39,7 @@ const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       ) : (
         <div className="flex h-screen w-full">{children}</div>
       )}
+      <ToastContainer />
     </ReduxProvider>
   );
 };
