@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { GoogleStrategy } from './google.strategy';
 import { JwtModule } from '@nestjs/jwt'
 import { UserModule } from '../user/user.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 
 @Module({
@@ -15,7 +16,8 @@ import { UserModule } from '../user/user.module';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.JWT_SESSION_EXPIRATION}
     }),
-    UserModule
+    UserModule,
+    PrismaModule,
   ],
   providers: [AuthService, GoogleStrategy],
   controllers: [AuthController],

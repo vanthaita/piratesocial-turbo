@@ -9,7 +9,7 @@ const initialState: LastMessageState = {
     lastMessage: '',
     timestamp: '',
 };
-
+    
 const lastMessageSlice = createSlice({
     name: 'lastMessage',
     initialState,

@@ -3,6 +3,7 @@ export function caltimeAgo(timeString: string): string {
     const now = new Date();
     const seconds: number = Math.floor((now.getTime() - time.getTime()) / 1000);
     const oneMonth = 30 * 24 * 60 * 60;
+    console.log(timeString)
     if (seconds >= oneMonth) {
         return `${time.getMonth() + 1}/${time.getDate()}/${time.getFullYear()}`;
     } 
@@ -22,5 +23,5 @@ export function caltimeAgo(timeString: string): string {
         return interval === 1 ? "1 minute ago" : `${interval} minutes ago`;
     }
 
-    return seconds === 1 ? "1 second ago" : `${seconds} seconds ago`;
+    return seconds === 1 || 'now' ? "0 second ago" : `${seconds} seconds ago`;
 }

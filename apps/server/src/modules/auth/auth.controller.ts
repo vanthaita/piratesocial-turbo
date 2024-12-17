@@ -6,11 +6,16 @@ import {
   Res,
   Req,
   UnauthorizedException,
+  Post,
+  Body,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response, Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard as JWTAuthGuard } from './auth.gaurd';
+import { SignInDto, SignUpDto } from 'src/dto/authDto/create-auth.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -36,7 +41,41 @@ export class AuthController {
     //   access_token: authRes.access_token,
     // });
   }
+  @Post('check-token')
+  async checkToken(@Body() body: { refresh_token: string }): Promise<any> {
+    try {
+      const refreshToken = body.refresh_token;
+      if (!refreshToken) {
+        throw new UnauthorizedException('Refresh token not found');
+      }
+      const { access_token } =
+        await this.authService.getAccessTokenUser(refreshToken);
+      return { message: 'Token is valid', access_token };
+    } catch (error) {
+      console.error(error);
+      throw new UnauthorizedException('Token validation failed');
+    }
+  }
+  @Post('sign-in')
+  async signIn(@Body() signInDto: SignInDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const { access_token, refresh_token } =
+        await this.authService.signIn(signInDto);
+        res.cookie('access_token', access_token, { httpOnly: true });
+      return { access_token, refresh_token };
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Login failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
+  @Post('sign-up')
+  async signUp(@Body() signUpDto: SignUpDto): Promise<any> {
+    await this.authService.signUp(signUpDto);
+    return { message: 'Sign Up successful' };
+  }
   @UseGuards(JWTAuthGuard)
   @Get('profile')
   async getProfile(@Request() req: ExpressRequest) {

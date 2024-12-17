@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import axios from 'axios';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { CreateUserDto } from 'src/dto/userDto/create-user.dto';
 import { User } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { SignInDto, SignUpDto } from 'src/dto/authDto/create-auth.dto';
+import * as argon2 from 'argon2';
 type UserWithoutPassword = Omit<User, 'password'>;
 @Injectable()
 export class AuthService {
@@ -11,6 +14,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private usersService: UserService,
+    private prismaService: PrismaService,
   ) {}
 
   async authenticate(token: string) {
@@ -36,6 +40,29 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+  async getAccessTokenUser(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_SECRET,
+      });
+      if (!payload) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+      const user = await this.prismaService.user.findFirst({
+        // where: { refreshToken },
+      });
+      if (!user) throw new UnauthorizedException('Invalid user');
+      const newAccessToken = this.jwtService.sign(
+        { sub: user.id, email: user.email },
+        { expiresIn: process.env.JWT_SESSION_EXPIRATION },
+      );
+  
+      return { access_token: newAccessToken };
+    } catch (err) {
+      console.error('Token error:', err.message);
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 
   async getNewAccessToken(refreshToken: string): Promise<string> {
@@ -98,5 +125,59 @@ export class AuthService {
     } catch (error) {
       console.error('Failed to revoke the token:', error);
     }
+  }
+  async signIn(signInDto: SignInDto) {
+    const { password, email } = signInDto;
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const passwordMatch = await argon2.verify(user.password, password);
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Password is incorrect');
+    }
+    const payload = { sub: user.id, email: user.email }; 
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: process.env.JWT_RT_SESSION_EXPIRATION,
+    });
+    // await this.prismaService.user.update({
+    //   where: { id: user.id },
+    //   // data: { refreshToken },
+    // });
+    return {
+      access_token: this.jwtService.sign(payload),
+      refresh_token: refreshToken,
+    };
+  }
+
+  async signUp(signUpDto: SignUpDto) {
+    const { email, name, password } = signUpDto;
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+    if (user) {
+      throw new ConflictException('User already exists');
+    }
+    const hashedPassword = await argon2.hash(password);
+    const newUser = await this.prismaService.user.create({
+      data: {
+        email,
+        name,
+        password: hashedPassword,
+        providerId: 'jwt',
+      },
+    });
+
+    return {
+      userId: newUser.id,
+      email: newUser.email,
+    };
   }
 }
