@@ -1,4 +1,6 @@
 import axios from 'axios';
+import Cookies from 'js-cookie';
+import { useRouter } from 'next/router'; // assuming you are using Next.js for routing
 
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:3001',
@@ -12,9 +14,9 @@ const axiosInstance = axios.create({
 // Request interceptor to attach access token to headers
 axiosInstance.interceptors.request.use(
   async (config) => {
-    // const accessToken = await getAccessToken();
+    // const accessToken = await Cookies.get('access_token');
     // if (accessToken) {
-    //   config.headers.Cookie = `access_token=${accessToken.accessToken}`;
+    //   config.headers.Cookie = `access_token=${accessToken}`;
     // }
     return config;
   },
@@ -32,27 +34,29 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Get the refresh token
-        // const refreshToken = await getRefreshToken();
-        // if (refreshToken) {
-        //   // Send POST request to refresh the token using the refresh token
-        //   const res = await axiosInstance.post('auth/check-token', {
-        //     refresh_token: refreshToken.refreshToken,
-        //   });
-        //   // Extract new access token from response
-        //   const newAccessToken = res.data.data.access_token;
-        //   await storeTokens(newAccessToken);
-
-        //   // Update the original request with the new access token and retry
-        //   originalRequest.headers.Cookie = `access_token=${newAccessToken}`;
-        //   return axiosInstance(originalRequest); // Retry the original request
-        // }
+        const refreshToken = await Cookies.get('refresh_token');
+        if (refreshToken) {
+          // Send POST request to refresh the token using the refresh token
+          const res = await axiosInstance.post('auth/check-token', {
+            refresh_token: refreshToken,
+          });
+          // Extract new access token from response
+          const newAccessToken = res.data.data.access_token;
+          await Cookies.set('access_token', newAccessToken);
+          originalRequest.headers.Cookie = `access_token=${newAccessToken}`;
+          return axiosInstance(originalRequest); // Retry the original request with new token
+        }
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError);
-        return Promise.reject(refreshError); // Handle failed token refresh
+        Cookies.remove('access_token');
+        Cookies.remove('refresh_token');
+        const router = useRouter(); 
+        router.push('/'); 
+        return Promise.reject(refreshError);
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(error); // Reject for other errors
   }
 );
 
