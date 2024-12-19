@@ -12,7 +12,30 @@ export class NotificationsService {
     private readonly followService: FollowService,
     private readonly prisma: PrismaService,
   ) {}
-
+  async seenNotifications(userId: number, notificationIds: number[]) {
+    const notifications = await this.prisma.notification.findMany({
+      where: {
+        id: { in: notificationIds },
+        userId: userId,
+      },
+    });
+    if (!notifications.length) {
+      throw new Error('No matching notifications found or they do not belong to the user');
+    }
+    await this.prisma.notification.updateMany({
+      where: {
+        id: { in: notificationIds },
+        userId: userId,
+      },
+      data: {
+        seen: true,
+      },
+    });
+  
+    return { success: true, updatedCount: notifications.length };
+  }
+  
+  
   async createNotification(userId: number, message: string, type: string) {
     return this.prisma.notification.create({
       data: {
@@ -28,7 +51,7 @@ export class NotificationsService {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.notification.count({
-        where: { userId },
+        where: { userId , seen: false},
       }),
     ]);
     return {

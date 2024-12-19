@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 
 interface Notification {
+  id: number;
   messageToSave: {
     postId: number;
     message: string;
@@ -22,6 +23,9 @@ interface Notification {
 const NotificationsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const notificationCount = useSelector(
+    (state: RootState) => state.notifications.count
+  );
   const {profile} = useAuth();
   const router = useRouter();
   useEffect(() => {
@@ -31,7 +35,7 @@ const NotificationsPage: React.FC = () => {
         const notificationsFromAPI = response.data.notifications;
         const notificationCount = response.data.count;
         const formattedNotifications = notificationsFromAPI.map((notification: any) => {
-          const { message, userId, createdAt } = notification;
+          const { message, userId, createdAt, id } = notification;
           let parsedMessage;
           try {
             parsedMessage = JSON.parse(message);
@@ -40,6 +44,7 @@ const NotificationsPage: React.FC = () => {
             parsedMessage = { postId: null, message: 'Invalid message format' };
           }
           return {
+            id,
             userId,
             messageToSave: {
               postId: parsedMessage.postId,
@@ -57,6 +62,30 @@ const NotificationsPage: React.FC = () => {
   
     fetchNotifications();
   }, [dispatch]);
+
+  useEffect(() => {
+    const markNotificationsAsSeen = async () => {
+      try {
+        if (notificationCount > 0 && notifications.length > 0) {
+          const uniqueNotificationIds = Array.from(
+            new Set(notifications.map((n) => n.id))
+          );
+          if (uniqueNotificationIds.length > 0) {
+            const response = await axiosInstance.post('/notifications/mark-as-seen', {
+              notificationIds: uniqueNotificationIds,
+            });
+            dispatch(setNotificationCount(0));
+          }
+        }
+      } catch (error) {
+        console.error('Error marking notifications as seen:', error);
+      }
+    };
+  
+    markNotificationsAsSeen(); 
+  }, [dispatch, notificationCount, notifications]);
+  
+
   useEffect(() => {
     const socket = io('http://localhost:3001', {
       auth: { profile: { id: profile?.id } },
