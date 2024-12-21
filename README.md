@@ -45,7 +45,7 @@
 -   **Socket.IO**: Manages real-time communication for chat and notifications.
 -   **Prisma**: Simplified database ORM for PostgreSQL.
 -   **PostgreSQL**: Relational database for storing user data, posts, and relationships.
--   **Redis**: For caching frequently accessed data and user sessions.
+-   **Cache - Redis**: For caching frequently accessed data and user sessions.
 -   **JWT**: Authentication and session management.
 
 ### Additional Tools
