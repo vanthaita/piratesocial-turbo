@@ -4,7 +4,6 @@ import { NotificationsController } from "./notification.controller";
 import { RedisService } from "../redis/redis.service";
 import { RedisModule } from "../redis/redis.module";
 import { PrismaModule } from "src/prisma/prisma.module";
-import { FollowService } from "../follow/follow.service";
 import { FollowModule } from "../follow/follow.module";
 
 @Module({
